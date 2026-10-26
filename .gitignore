@@ -71,3 +71,8 @@ _d/
 _ico/
 _lay/
 _rt/
+
+# archive/legacy 下的历史数据文件（只保留 README 说明）
+archive/legacy/*.tsv
+archive/legacy/*.txt
+archive/legacy/*.log
