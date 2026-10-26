@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "title": "学习工作台 · 多课程",
+  "updated": "2026-10-27",
+  "courses": [
+    {
+      "id": "compute",
+      "name": "计算理论",
+      "icon": "λ",
+      "color": "#4f8ef7",
+      "question": "计算的本质、结构、意义与效果是什么？",
+      "kind": "graph",
+      "desc": "λ 演算 / 类型论 / SK 组合子 / 单子。有可执行笔记本，能真跑归约。",
+      "source": "curriculum.json"
+    },
+    {
+      "id": "llm",
+      "name": "大模型",
+      "icon": "🧠",
+      "color": "#22d3ee",
+      "question": "大模型是怎么工作的，每个术语到底在说什么？",
+      "kind": "terms",
+      "desc": "10 层 101 个 ★ 必会词，带前置门禁与三种追问。依赖图无环。",
+      "source": "llm/layers.json"
+    }
+  ]
+}

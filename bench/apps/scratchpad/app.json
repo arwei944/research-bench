@@ -1,0 +1,13 @@
+{
+  "id": "scratchpad",
+  "name": "草稿台",
+  "icon": "scratchpad",
+  "tagline": "实验层示例：随手记、临时验证想法。允许随时删掉。",
+  "color": "#34d399",
+  "order": 10,
+  "version": "1.0.0",
+  "layer": "lab",
+  "requires": [
+    "mode"
+  ]
+}

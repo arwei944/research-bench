@@ -1,0 +1,2409 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bench</title>
+<style>
+  /* ======================================================================
+     主题变量 —— 一份，全局
+     外壳、以及 iframe 内的应用都引用这些变量
+     ====================================================================== */
+  :root, [data-theme="dark"] {
+    --bg:#0b0d12; --panel:#12151d; --elev:#181c26;
+    --line:#232936; --line2:#333c4d;
+    --fg:#e8ecf4; --fg2:#a2adc0; --fg3:#697586;
+    --ac:#5b93f8; --ac2:#1e3559;
+    --ok:#3ddc97; --warn:#fbbf24; --err:#fb7185; --violet:#a78bfa; --pink:#f472b6;
+    --shadow:0 8px 28px rgba(0,0,0,.42);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Cascadia Code",monospace;
+  }
+  [data-theme="light"] {
+    --bg:#f6f7f9; --panel:#ffffff; --elev:#f0f2f5;
+    --line:#e2e6ec; --line2:#c8cfda;
+    --fg:#161b22; --fg2:#4c5866; --fg3:#7b8794;
+    --ac:#2563eb; --ac2:#dbeafe;
+    --ok:#059669; --warn:#b45309; --err:#dc2626; --violet:#7c3aed; --pink:#db2777;
+    --shadow:0 8px 28px rgba(16,24,40,.10);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--bg); color:var(--fg);
+    /* 默认无衬线：界面文字要读得快 */
+    font-family:var(--font-ui, -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif);
+    font-size:14px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  /* UI 控件用无衬线，内容用设计指定的字体 —— 衬线字体做按钮很难看 */
+  button,input,select,textarea{
+    font:inherit; color:inherit;
+    font-family:var(--font-ui, -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif);
+  }
+  code,pre,.mono{font-family:var(--mono, ui-monospace,monospace)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+
+  /* ---------------- 顶栏 ---------------- */
+  header{
+    flex:none; display:flex; align-items:center; gap:14px;
+    padding:9px 14px; background:var(--panel);
+    border-bottom:1px solid var(--line); position:relative; z-index:5;
+  }
+  .logo{
+    display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px;
+    letter-spacing:.3px; flex:none;
+  }
+  .logo .mark{
+    width:22px; height:22px; border-radius:6px; flex:none;
+    background:linear-gradient(135deg,var(--ac),color-mix(in srgb, var(--ac) 55%, var(--ac2)));
+    display:grid; place-items:center; color:#fff; font-size:12px; font-weight:900;
+  }
+
+  .tabs{display:flex; gap:4px; overflow-x:auto; flex:1; min-width:0; padding-bottom:1px}
+  .tab{
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+    padding:6px 12px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600;
+    border:1px solid transparent; color:var(--fg3); background:none; transition:all .12s;
+  }
+  .tab:hover{color:var(--fg2); background:var(--elev)}
+  .tab.on{color:var(--fg); background:var(--elev); border-color:var(--line2)}
+  .tab .ic{font-size:14px; line-height:1}
+  .tab .dotx{width:5px; height:5px; border-radius:50%; background:var(--ok); flex:none}
+
+  .actions{display:flex; gap:7px; align-items:center; flex:none}
+  .icon-btn{
+    width:31px; height:31px; border-radius:8px; border:1px solid var(--line);
+    background:var(--elev); cursor:pointer; display:grid; place-items:center;
+    font-size:14px; transition:all .12s;
+  }
+  .icon-btn:hover{border-color:var(--line2); color:var(--ac)}
+  .mode-switch{
+    display:flex; align-items:center; gap:6px; height:31px; padding:0 11px;
+    border-radius:var(--radius); border:1px solid var(--line); background:var(--elev);
+    cursor:pointer; font-size:12px; font-weight:600; color:var(--fg2); transition:all .12s;
+  }
+  .mode-switch:hover{border-color:var(--line2); color:var(--fg)}
+  .mode-switch .m-dot{width:7px; height:7px; border-radius:50%; background:var(--ok); flex:none}
+  .mode-switch.expert .m-dot{background:var(--ac)}
+
+  /* ---------- 内嵌设计切换器 ---------- */
+  .designer{position:relative}
+  .designer-pop{
+    display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:50;
+    width:420px; max-height:70vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line2); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow); padding:12px;
+  }
+  .designer-pop.open{display:block}
+  .dp-head{display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--fg3); font-weight:700; margin-bottom:10px}
+  .dp-more{color:var(--ac); text-decoration:none; text-transform:none;
+    letter-spacing:0; font-weight:600}
+  .dp-more:hover{text-decoration:underline}
+  .dp-grid{display:grid; grid-template-columns:1fr 1fr; gap:7px}
+  .dp-item{
+    text-align:left; background:var(--bg); border:1px solid var(--line);
+    border-radius:var(--radius); padding:7px 9px; cursor:pointer;
+    transition:all .12s; display:flex; align-items:center; gap:7px;
+  }
+  .dp-item:hover{border-color:var(--line2); background:var(--elev)}
+  .dp-item.on{border-color:var(--ac); box-shadow:0 0 0 2px color-mix(in srgb, var(--ac) 26%, transparent)}
+  .dp-swatch{display:flex; gap:2px; flex:none}
+  .dp-swatch i{width:8px; height:16px; border-radius:2px; display:block}
+  .dp-name{font-size:11.5px; font-weight:600; color:var(--fg2); line-height:1.3}
+  .dp-item.on .dp-name{color:var(--fg)}
+  .dp-lay{font-size:9px; color:var(--fg3); font-family:var(--mono)}
+  .btn{
+    background:var(--ac); color:#fff; border:none; border-radius:8px;
+    padding:6px 13px; cursor:pointer; font-weight:600; font-size:12.5px;
+  }
+  .btn:hover{opacity:.88}
+  .btn.ghost{background:var(--elev); border:1px solid var(--line); color:var(--fg2)}
+  .btn.ghost:hover{border-color:var(--line2); color:var(--fg)}
+  .btn.sm{padding:4px 10px; font-size:11.5px}
+
+  /* ---------------- 内容区 ---------------- */
+  main{flex:1; min-height:0; position:relative; background:var(--bg)}
+  iframe{
+    width:100%; height:100%; border:none; display:block; background:var(--bg);
+  }
+  .frame-wrap{position:absolute; inset:0; display:none}
+  .frame-wrap.on{display:block}
+
+  /* ---------------- 欢迎页 ---------------- */
+  #welcome{position:absolute; inset:0; overflow-y:auto; display:none}
+  #welcome.on{display:block}
+  .welcome-inner{max-width:960px; margin:0 auto; padding:44px 24px 60px}
+  .hero h1{font-size:26px; margin:0 0 8px; letter-spacing:-.3px}
+  .hero p{color:var(--fg2); margin:0 0 26px; font-size:13.5px; max-width:640px; line-height:1.75}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:12px}
+  .app-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:16px; cursor:pointer; transition:all .13s; text-align:left;
+    display:flex; flex-direction:column; gap:9px;
+  }
+  .promote{
+    margin-left:auto; flex:none; font-size:10px; font-weight:700;
+    background:var(--elev); border:1px solid var(--line2); color:var(--warn);
+    border-radius:6px; padding:2px 8px; cursor:pointer; transition:all .12s;
+  }
+  .promote:hover{border-color:var(--warn); background:color-mix(in srgb, var(--warn) 14%, transparent)}
+  .app-card.is-broken{border-color:var(--err); opacity:.82}
+  .app-card.is-broken:hover{opacity:1}
+  .lay-broken{
+    font-size:10.5px; color:var(--err); line-height:1.55; margin-top:4px;
+    background:color-mix(in srgb, var(--err) 10%, transparent);
+    border-left:2px solid var(--err); padding:4px 7px; border-radius:0 4px 4px 0;
+  }
+  .app-card:hover{border-color:var(--line2); transform:translateY(-1px); box-shadow:var(--shadow)}
+  .app-card .top{display:flex; align-items:center; gap:9px}
+  .app-card .ico{
+    width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+    font-size:17px; flex:none; background:var(--elev); border:1px solid var(--line);
+  }
+  .app-card .nm{font-weight:700; font-size:14px}
+  .app-card .tg{font-size:11.5px; color:var(--fg3); line-height:1.5}
+  .app-card .meta{font-size:10.5px; color:var(--fg3); font-family:var(--mono); margin-top:auto}
+
+  .sec-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--fg3); font-weight:700; margin:30px 0 12px;
+    display:flex; align-items:center; gap:9px;
+  }
+  .sec-title .r{margin-left:auto; text-transform:none; letter-spacing:0; font-weight:500}
+
+  /* ---------- 分层视图 ---------- */
+  .layer-legend{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px}
+  .lg-item{
+    display:flex; align-items:center; gap:6px; font-size:11px;
+    background:var(--elev); border:1px solid var(--line); border-radius:99px;
+    padding:3px 11px; color:var(--fg3);
+  }
+  .lg-item .lg-dot{width:7px; height:7px; border-radius:50%; flex:none}
+  .lg-item .lg-n{color:var(--fg2); font-weight:600}
+  .lg-item .lg-c{font-family:var(--mono); color:var(--fg)}
+
+  .layer-block{margin-bottom:22px}
+  .layer-head{
+    display:flex; align-items:baseline; gap:10px; margin-bottom:3px; flex-wrap:wrap;
+  }
+  .layer-head .lh-icon{font-size:13px}
+  .layer-head .lh-name{font-size:13px; font-weight:700; letter-spacing:.02em}
+  .layer-head .lh-lv{
+    font-size:9.5px; font-family:var(--mono); padding:1px 6px; border-radius:4px;
+    background:var(--elev); border:1px solid var(--line); color:var(--fg3);
+  }
+  .layer-head .lh-rule{font-size:10.5px; color:var(--fg3)}
+  .layer-desc{
+    font-size:11.5px; color:var(--fg3); line-height:1.6; margin-bottom:11px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .layer-desc .bad{color:var(--err)}
+  .layer-desc .impact{
+    font-size:10px; padding:1px 7px; border-radius:4px;
+    background:var(--elev); border:1px solid var(--line); color:var(--fg3);
+  }
+
+  /* 层级用左侧竖线表示深度，越靠下越粗 */
+  .layer-block{border-left:2px solid var(--line); padding-left:14px; margin-left:2px}
+  .layer-block[data-level="0"]{border-left-color:color-mix(in srgb,var(--ac) 30%,var(--fg3)); border-left-width:4px}
+  .layer-block[data-level="1"]{border-left-color:var(--ac); border-left-width:4px}
+  .layer-block[data-level="2"]{border-left-color:var(--ok); border-left-width:4px}
+  .layer-block[data-level="3"]{border-left-color:var(--warn); border-left-style:dashed; border-left-width:4px}
+
+  .layer-empty{
+    font-size:11.5px; color:var(--fg3); padding:10px 0 4px; font-style:italic;
+  }
+  /* ---------- 依赖图 ---------- */
+  .dep-map{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:14px 16px 8px; margin-bottom:18px; position:relative; overflow-x:auto;
+  }
+  .dep-map .dm-head{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--fg3); font-weight:700; margin-bottom:10px;
+  }
+  .dep-map .dm-stat{text-transform:none; letter-spacing:0; font-weight:500; color:var(--fg3); font-family:var(--mono)}
+  .dep-map svg{display:block; max-width:100%; height:auto}
+  .dm-node{cursor:pointer}
+  .dm-node rect{transition:all .12s}
+  .dm-node text{font-size:9.5px; font-weight:600; pointer-events:none}
+  .dm-node .lv{font-size:8px; opacity:.65; font-family:var(--mono)}
+  .dm-node:hover rect{stroke-width:2}
+  .dm-node.hl rect{stroke-width:2.4}
+  .dm-node.dim{opacity:.28}
+  .dm-edge{transition:all .12s}
+  .dm-edge.hl{stroke-width:2}
+  .dm-edge.dim{opacity:.12}
+  .dm-legend{display:flex; gap:12px; flex-wrap:wrap; font-size:10px; color:var(--fg3); margin-top:6px}
+  .dm-legend span{display:flex; align-items:center; gap:4px}
+  .dm-legend i{width:10px; height:2px; display:block}
+
+  .app-card .lay-warn{
+    font-size:10px; color:var(--warn); margin-top:4px; line-height:1.5;
+  }
+  .app-card .lay-dep{
+    font-size:10px; color:var(--err); margin-top:4px; line-height:1.5;
+  }
+
+  /* ======================================================================
+     动效 —— 三个有目的的动效，不做装饰性动画
+     ----------------------------------------------------------------------
+     依据（frontend-skill）：
+       "Use motion to create presence and hierarchy, not noise."
+       一个入场序列 · 一个 hover 反馈 · 一个布局过渡
+     ====================================================================== */
+
+  /* ① 入场：内容区淡入上移（切换 Tab 时重放） */
+  @keyframes wsEnter {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .welcome-inner:not([hidden]) {
+    animation: wsEnter .26s cubic-bezier(.22,.61,.36,1) both;
+  }
+  /* 主区内的层级块错开入场 */
+  .welcome-inner:not([hidden]) .layer-block {
+    animation: wsEnter .32s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .welcome-inner:not([hidden]) .layer-block:nth-child(1) { animation-delay: .04s; }
+  .welcome-inner:not([hidden]) .layer-block:nth-child(2) { animation-delay: .09s; }
+  .welcome-inner:not([hidden]) .layer-block:nth-child(3) { animation-delay: .14s; }
+  .welcome-inner:not([hidden]) .layer-block:nth-child(4) { animation-delay: .19s; }
+
+  /* ② hover：应用卡右侧滑出「进入」提示，把 affordance 说清楚 */
+  .workbench .app-card { position: relative; }
+  .workbench .app-card::after {
+    content: "进入 →";
+    position: absolute;
+    right: 12px;
+    top: 13px;
+    font-size: 10.5px;
+    color: var(--ac);
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: opacity .16s, transform .16s;
+    pointer-events: none;
+  }
+  .workbench .app-card:hover::after {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ③ 布局过渡：依赖图节点 hover 时高亮，已有 JS 控制，这里只加过渡 */
+  .dm-node { transition: opacity .16s; }
+  .dm-node rect { transition: stroke-width .14s, fill .14s; }
+  .dm-edge { transition: opacity .16s, stroke .16s; }
+
+  /* 尊重「减少动效」偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    .welcome-inner:not([hidden]),
+    .welcome-inner:not([hidden]) .layer-block {
+      animation: none;
+    }
+    .workbench .app-card::after { transition: none; }
+  }
+
+  /* ---------------- 体检 / 知识层：同样去卡片化 ---------------- */
+  /* 这两个 Tab 原本每个 section 一个 .panel 方框，是典型的 stacked cards。
+     改成：section 之间用分隔线，内容直接铺开。 */
+  #h-health .panel,
+  #h-kernel .panel {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 4px;
+  }
+  #h-health .sec-title,
+  #h-kernel .sec-title {
+    margin-top: 26px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 7px;
+  }
+  /* KPI 已有竖分隔线，不需要额外容器 */
+  #h-health .kpis,
+  #h-kernel .kpis {
+    padding: 4px 0 6px;
+  }
+  /* 表格：只留横线 */
+  #h-health table,
+  #h-kernel table {
+    margin-top: 6px;
+  }
+  #h-health th,
+  #h-kernel th {
+    border-bottom: 1px solid var(--line2);
+  }
+  #h-health td,
+  #h-kernel td {
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* ---------------- 主工作区去卡片化 ---------------- */
+  /* 应用卡片：去掉边框与阴影，用左侧层级色条 + hover 底色区分 */
+  .workbench .app-card {
+    background: none;
+    border: none;
+    border-left: 2px solid var(--line2);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 13px 14px 13px 15px;
+    transition: background .14s, border-left-color .14s;
+  }
+  .workbench .app-card:hover {
+    background: var(--elev);
+    border-left-color: var(--ac);
+    transform: none;
+    box-shadow: none;
+  }
+  .workbench .app-card.is-broken { border-left-color: var(--err); }
+
+  /* 层级分组：去掉外层方框，用标题 + 分隔线 */
+  .workbench .layer-block {
+    border: none;
+    background: none;
+    padding: 0;
+    margin-bottom: 30px;
+    border-left: none;
+  }
+  .workbench .layer-head {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 7px;
+    margin-bottom: 12px;
+    cursor: help;
+  }
+  .workbench .layer-head .lh-name { font-size: 12.5px; font-weight: 600; }
+  .workbench .layer-head .lh-lv {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--fg3);
+    letter-spacing: .06em;
+  }
+  .workbench .layer-head .lh-cnt {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg3);
+  }
+
+  /* 依赖图：宽度跟随内容（4 列节点，不该撑满整行） */
+  .workbench .dep-map {
+    border: none;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: none;
+    padding: 12px 0 6px;
+    margin-bottom: 26px;
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* 图例：变成行内文字，不再是 pill */
+  .workbench .lg-item {
+    background: none;
+    border: none;
+    padding: 0;
+    gap: 5px;
+  }
+
+  /* ---------------- 应用管理面板 ---------------- */
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px;
+  }
+  .field-row{display:flex; gap:9px; flex-wrap:wrap; margin-bottom:10px}
+  .field-row > *{min-width:0}
+  input[type=text], select{
+    background:var(--bg); border:1px solid var(--line); border-radius:8px;
+    padding:8px 11px; width:100%; outline:none; transition:border-color .12s;
+  }
+  input[type=text]:focus, select:focus{border-color:var(--ac)}
+  .grow{flex:1 1 170px}
+  .tiny-label{font-size:10.5px; color:var(--fg3); margin-bottom:4px; display:block}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:12px}
+  th,td{border-bottom:1px solid var(--line); padding:8px 9px; text-align:left}
+  th{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg3); font-weight:700}
+  td.mono{font-family:var(--mono); font-size:11.5px; color:var(--fg2)}
+  .chip{
+    display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px;
+    background:var(--elev); border:1px solid var(--line); margin-right:4px;
+  }
+  .chip.on{color:var(--ok); border-color:var(--ok)}
+  .chip.err{color:var(--err); border-color:var(--err)}
+
+  .flash{font-size:12px; padding:9px 12px; border-radius:8px; margin-top:10px; white-space:pre-wrap}
+  .flash.ok{background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok); border:1px solid color-mix(in srgb, var(--ok) 36%, transparent)}
+  .flash.err{background:color-mix(in srgb, var(--err) 14%, transparent); color:var(--err); border:1px solid color-mix(in srgb, var(--err) 36%, transparent)}
+  .flash.info{background:color-mix(in srgb, var(--ac) 14%, transparent); color:var(--ac); border:1px solid color-mix(in srgb, var(--ac) 36%, transparent)}
+
+  code{background:var(--elev); padding:1px 5px; border-radius:4px; font-family:var(--mono); font-size:11.5px}
+
+  /* ======================================================================
+     布局系统 —— 11 款设计 × 9 种 layout
+     ----------------------------------------------------------------------
+     之前的问题：designs.mjs 里每款设计都声明了 layout（sidebar-left / top-tabs /
+     command / rail ...），但前端只用了颜色 token，布局结构完全不变。
+     结果就是「换设计只换配色」—— 用户点了没感觉。
+
+     现在：body[data-layout="xxx"] 真正改变排版结构。
+     每个 layout 至少改三件事：导航位置、内容分栏、密度。
+     ====================================================================== */
+
+  /* ---------- ① top-tabs（默认）：顶部标签栏 ---------- */
+  /* 已经是默认结构，无需额外规则 */
+
+  /* ---------- ② sidebar-left：左侧固定侧栏导航 ---------- */
+  body[data-layout="sidebar-left"] header {
+    flex-direction: column;
+    align-items: stretch;
+    height: 100vh;
+    width: 208px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+    padding: 14px 12px;
+    gap: 4px;
+  }
+  body[data-layout="sidebar-left"] header .logo {
+    margin-bottom: 14px;
+    padding: 0 6px;
+  }
+  body[data-layout="sidebar-left"] .tabs {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
+    gap: 2px;
+    flex: 1;
+  }
+  body[data-layout="sidebar-left"] .tab {
+    justify-content: flex-start;
+    width: 100%;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 11px;
+    text-align: left;
+  }
+  body[data-layout="sidebar-left"] .actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 5px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  body[data-layout="sidebar-left"] main {
+    margin-left: 208px;
+  }
+  body[data-layout="sidebar-left"] .workbench {
+    max-width: 1180px;
+  }
+
+  /* ---------- ③ sidebar-narrow：窄图标侧栏（Linear 风） ---------- */
+  body[data-layout="sidebar-narrow"] header {
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    width: 58px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+    padding: 12px 6px;
+    gap: 6px;
+  }
+  body[data-layout="sidebar-narrow"] header .logo span:not(.mark) { display: none; }
+  body[data-layout="sidebar-narrow"] header .logo { margin-bottom: 8px; }
+  body[data-layout="sidebar-narrow"] .tabs {
+    flex-direction: column;
+    align-items: center;
+    overflow: visible;
+    gap: 4px;
+    flex: 1;
+  }
+  body[data-layout="sidebar-narrow"] .tab {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius);
+  }
+  body[data-layout="sidebar-narrow"] .tab > span:last-child { display: none; }
+  body[data-layout="sidebar-narrow"] .tab .ic { font-size: 16px; }
+  body[data-layout="sidebar-narrow"] .actions {
+    flex-direction: column;
+    gap: 4px;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  body[data-layout="sidebar-narrow"] .mode-switch span:last-child { display: none; }
+  body[data-layout="sidebar-narrow"] main { margin-left: 58px; }
+  body[data-layout="sidebar-narrow"] .workbench { max-width: 1240px; }
+
+  /* ---------- ④ rail：极窄图标轨 ---------- */
+  body[data-layout="rail"] header {
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    width: 44px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+    padding: 10px 4px;
+    gap: 3px;
+  }
+  body[data-layout="rail"] header .logo { display: none; }
+  body[data-layout="rail"] .tabs {
+    flex-direction: column;
+    align-items: center;
+    overflow: visible;
+    gap: 2px;
+    flex: 1;
+  }
+  body[data-layout="rail"] .tab {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+    border: none;
+  }
+  body[data-layout="rail"] .tab > span:last-child { display: none; }
+  body[data-layout="rail"] .actions {
+    flex-direction: column;
+    gap: 2px;
+    margin-top: auto;
+  }
+  body[data-layout="rail"] .mode-switch { display: none; }
+  body[data-layout="rail"] main { margin-left: 44px; }
+
+  /* ---------- ⑤ centered：居中窄栏（Perplexity 风） ---------- */
+  body[data-layout="centered"] .workbench {
+    grid-template-columns: 1fr;
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 60px;
+  }
+  body[data-layout="centered"] .ws-side {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+  }
+  body[data-layout="centered"] .ws-head {
+    justify-content: center;
+    text-align: center;
+    border-bottom: none;
+    margin-bottom: 22px;
+  }
+  body[data-layout="centered"] .ws-head h1 { font-size: 34px; }
+  body[data-layout="centered"] .ws-meta { margin-left: 0; }
+  body[data-layout="centered"] .dep-map { margin: 0 auto 30px; }
+
+  /* ---------- ⑥ dashboard：高密度多栏（Grafana 风） ---------- */
+  body[data-layout="dashboard"] .workbench {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    padding: 18px 16px 60px;
+    gap: 16px;
+  }
+  body[data-layout="dashboard"] .ws-head {
+    padding-bottom: 8px;
+    margin-bottom: 0;
+  }
+  body[data-layout="dashboard"] .ws-head h1 { font-size: 18px; }
+  body[data-layout="dashboard"] .ws-side {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  body[data-layout="dashboard"] .layer-block { margin-bottom: 14px; }
+  body[data-layout="dashboard"] .workbench .grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  body[data-layout="dashboard"] .workbench .app-card { padding: 9px 11px; }
+  body[data-layout="dashboard"] .dep-map { margin-bottom: 14px; }
+
+  /* ---------- ⑦ split：左右分屏（Obsidian / Superhuman 风） ---------- */
+  body[data-layout="split"] .workbench {
+    grid-template-columns: 258px minmax(0, 1fr);
+    gap: 0;
+    max-width: 100%;
+    padding: 0;
+  }
+  body[data-layout="split"] .ws-side {
+    position: sticky;
+    top: 0;
+    order: -1;
+    height: calc(100vh - var(--header-h));
+    overflow-y: auto;
+    border-right: 1px solid var(--line);
+    padding: 20px 16px;
+    gap: 18px;
+    max-width: none;
+  }
+  body[data-layout="split"] .ws-main {
+    padding: 24px 26px 70px;
+  }
+  body[data-layout="split"] .ws-head { padding-bottom: 11px; }
+
+  /* ---------- ⑧ command：命令面板优先（Raycast 风） ---------- */
+  body[data-layout="command"] .workbench {
+    grid-template-columns: 1fr;
+    max-width: 860px;
+    margin: 0 auto;
+    padding-top: 44px;
+  }
+  /* 顶部加一个假的「命令输入」视觉锚点 */
+  body[data-layout="command"] .ws-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    border-bottom: none;
+    margin-bottom: 18px;
+  }
+  body[data-layout="command"] .ws-head::after {
+    content: "⌘K  搜索应用…";
+    display: block;
+    padding: 11px 14px;
+    border: 1px solid var(--line2);
+    border-radius: var(--radius-lg);
+    background: var(--panel);
+    color: var(--fg3);
+    font-size: 12.5px;
+  }
+  body[data-layout="command"] .ws-meta { margin-left: 0; }
+  body[data-layout="command"] .ws-side {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  body[data-layout="command"] .dep-map { display: none; }
+
+  /* ======================================================================
+     首页布局 —— 主从两栏，不是卡片堆叠
+     ----------------------------------------------------------------------
+     设计依据（frontend-skill）：
+       "App UI made of stacked cards instead of layout" 是要拒绝的失败模式。
+       "If a panel can become plain layout without losing meaning, remove the card."
+     所以：主工作区用分区与分隔线组织，侧栏只放低频操作。
+     ====================================================================== */
+  /* hidden 必须真的隐藏 —— .workbench 设了 display:grid 会覆盖浏览器的默认 [hidden] 规则 */
+  [hidden] { display: none !important; }
+
+  .workbench {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 292px;
+    gap: 44px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 38px 26px 90px;
+    align-items: start;
+  }
+  @media (max-width: 1080px) {
+    .workbench { grid-template-columns: 1fr; gap: 30px; }
+  }
+
+  .ws-main { min-width: 0; }
+
+  .ws-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line2);
+  }
+  .ws-head h1 {
+    font-family: var(--font, Georgia, "Noto Serif SC", serif);
+    font-weight: 400;
+    font-size: 27px;
+    letter-spacing: -.02em;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .ws-meta {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg3);
+    letter-spacing: .04em;
+  }
+
+  /* 侧栏 */
+  .ws-side {
+    position: sticky;
+    top: 62px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  @media (max-width: 1080px) { .ws-side { position: static; } }
+
+  .side-block {
+    border-top: 1px solid var(--line2);
+    padding-top: 11px;
+  }
+  .side-h {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--font, Georgia, "Noto Serif SC", serif);
+    font-size: 12.5px;
+    letter-spacing: .05em;
+    color: var(--fg2);
+    margin-bottom: 11px;
+  }
+  .side-h > span {
+    margin-left: auto;
+    font-family: var(--font-ui, sans-serif);
+    font-size: 10px;
+    letter-spacing: .06em;
+    color: var(--fg3);
+    text-transform: uppercase;
+  }
+  .side-note p {
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: var(--fg3);
+    margin: 0 0 9px;
+  }
+  .side-note code {
+    font-size: 10.5px;
+    background: var(--elev);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  /* 表单字段（纵向，适配窄侧栏） */
+  .field-col { display: flex; flex-direction: column; gap: 9px; }
+  .fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .fld > span {
+    font-size: 10px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--fg3);
+  }
+  .fld input, .fld select { width: 100%; }
+  .fld-row { display: flex; gap: 9px; }
+
+  /* 已安装列表：表格改列表，窄栏更省空间 */
+  .mgr-table { width: 100%; border-collapse: collapse; margin: 0; }
+  .mgr-table td {
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    vertical-align: middle;
+  }
+  .mgr-table tr:last-child td { border-bottom: none; }
+  .mgr-table .mgr-name { display: flex; align-items: center; gap: 7px; }
+  .mgr-table .mgr-name .ico { color: var(--fg3); flex: none; }
+  .mgr-table .mgr-id {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--fg3);
+    display: block;
+    margin-top: 1px;
+  }
+  .mgr-table .mgr-act {
+    text-align: right;
+    white-space: nowrap;
+    width: 1%;
+  }
+  .mgr-table .mgr-act button {
+    background: none;
+    border: none;
+    color: var(--fg3);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 5px;
+  }
+  .mgr-table .mgr-act button:hover { color: var(--err); }
+
+  /* ---------------- 首页三 Tab ---------------- */
+  .home-tabs{
+    position:sticky; top:0; z-index:20;
+    display:flex; gap:2px; padding:0 24px;
+    background:color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .htab{
+    background:none; border:none; border-bottom:2px solid transparent;
+    padding:12px 18px; cursor:pointer; color:var(--fg3);
+    font-size:13px; font-weight:600; white-space:nowrap;
+  }
+  .htab:hover{color:var(--fg2)}
+  .htab.on{color:var(--ac); border-bottom-color:var(--ac)}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:9px}
+  .kpi{background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:10px 12px}
+  .kpi .v{font-size:19px; font-weight:700; font-family:var(--mono); line-height:1.2}
+  .kpi .k{font-size:10.5px; color:var(--fg3); margin-top:1px}
+
+  .muted{color:var(--fg3); font-size:12px; line-height:1.7}
+  .loop{display:flex; gap:7px; align-items:center; flex-wrap:wrap}
+  .loop .nd{
+    background:var(--bg); border:1px solid var(--line); border-radius:8px;
+    padding:9px 13px; font-size:12px; display:flex; gap:8px; align-items:baseline;
+  }
+  .loop .nd b{font-family:var(--mono); font-size:15px}
+  .loop .ar{color:var(--fg3); font-size:13px}
+  .loop .nd.ok{border-color:color-mix(in srgb,var(--ok) 45%, transparent)}
+  .loop .nd.ok b{color:var(--ok)}
+  .loop .nd.bad{border-color:color-mix(in srgb,var(--err) 45%, transparent)}
+  .loop .nd.bad b{color:var(--err)}
+
+  .banner{border-radius:10px; padding:13px 16px; margin-bottom:6px;
+    display:flex; gap:11px; align-items:center; flex-wrap:wrap}
+  .banner.ok{background:color-mix(in srgb,var(--ok) 11%,transparent); border:1px solid color-mix(in srgb,var(--ok) 34%,transparent)}
+  .banner.warn{background:color-mix(in srgb,var(--warn) 11%,transparent); border:1px solid color-mix(in srgb,var(--warn) 34%,transparent)}
+  .banner.err{background:color-mix(in srgb,var(--err) 11%,transparent); border:1px solid color-mix(in srgb,var(--err) 34%,transparent)}
+  .banner .big{font-size:15px; font-weight:700}
+  .banner .desc{font-size:12px; color:var(--fg2); flex:1; min-width:200px}
+
+  .issue{display:flex; gap:9px; align-items:baseline; padding:7px 0; border-bottom:1px solid var(--line); font-size:12.5px}
+  .issue:last-child{border-bottom:none}
+  .issue .lv{font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:4px; font-family:var(--mono); white-space:nowrap}
+  .issue .lv.err{background:color-mix(in srgb,var(--err) 18%,transparent); color:var(--err)}
+  .issue .lv.warn{background:color-mix(in srgb,var(--warn) 18%,transparent); color:var(--warn)}
+  .issue .lv.info{background:color-mix(in srgb,var(--ac) 18%,transparent); color:var(--ac)}
+
+  /* 知识层 */
+  .claim{background:var(--bg); border:1px solid var(--line); border-radius:9px;
+    padding:11px 13px; margin-bottom:8px; border-left:3px solid var(--line2)}
+  .claim.s-supported{border-left-color:var(--ok)}
+  .claim.s-draft{border-left-color:var(--warn)}
+  .claim.s-contested{border-left-color:var(--ac)}
+  .claim.s-refuted{border-left-color:var(--err)}
+  .claim-head{display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap}
+  .claim-text{font-size:13px; font-weight:600; flex:1; min-width:200px; line-height:1.55}
+  .badge{font-size:9.5px; font-weight:700; padding:1px 7px; border-radius:4px; font-family:var(--mono); white-space:nowrap}
+  .b-supported{background:color-mix(in srgb,var(--ok) 18%,transparent); color:var(--ok)}
+  .b-draft{background:color-mix(in srgb,var(--warn) 18%,transparent); color:var(--warn)}
+  .b-refuted{background:color-mix(in srgb,var(--err) 18%,transparent); color:var(--err)}
+  .b-other{background:var(--elev); border:1px solid var(--line); color:var(--fg3)}
+  .claim-meta{font-size:10.5px; color:var(--fg3); margin-top:5px; font-family:var(--mono);
+    display:flex; gap:11px; flex-wrap:wrap}
+  .claim-warn{font-size:11.5px; color:var(--err); margin-top:6px; line-height:1.6;
+    background:color-mix(in srgb,var(--err) 10%,transparent); border-left:2px solid var(--err);
+    padding:5px 9px; border-radius:0 5px 5px 0}
+  .chain{margin-top:7px; display:flex; flex-direction:column; gap:5px}
+  .chain-item{display:flex; gap:7px; font-size:11.5px; align-items:baseline}
+  .chain-tier{font-family:var(--mono); font-weight:700; font-size:10px; padding:0 5px; border-radius:3px;
+    background:var(--elev); border:1px solid var(--line); color:var(--fg2); flex:none}
+  .chain-item.tA .chain-tier{background:color-mix(in srgb,var(--ok) 20%,transparent); color:var(--ok); border-color:transparent}
+  .chain-item.tC .chain-tier{background:color-mix(in srgb,var(--warn) 20%,transparent); color:var(--warn); border-color:transparent}
+  .chain-item.tD .chain-tier{background:var(--elev); color:var(--fg3)}
+  .chain-body{color:var(--fg2); line-height:1.55}
+  .chain-ref{font-size:10.5px; color:var(--fg3); font-family:var(--mono)}
+  .gate-ok{color:var(--ok)}
+  .gate-bad{color:var(--err)}
+
+  .kb-row{display:flex; gap:9px; align-items:baseline; padding:7px 0;
+    border-bottom:1px solid var(--line); font-size:12.5px; cursor:pointer; flex-wrap:wrap}
+  .kb-row:last-child{border-bottom:none}
+  .kb-row:hover{background:var(--elev); border-radius:5px; padding-left:7px; margin-left:-7px}
+  .kb-row .dm{font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:4px;
+    background:var(--elev); border:1px solid var(--line); color:var(--fg3); font-family:var(--mono); white-space:nowrap}
+  .kb-row .tt{font-weight:600; flex:1; min-width:170px}
+  .kb-row .mt{font-size:10.5px; color:var(--fg3); font-family:var(--mono); white-space:nowrap}
+  .kb-row .cf{font-size:9.5px; font-family:var(--mono); padding:1px 5px; border-radius:3px}
+  .cf-high{background:color-mix(in srgb,var(--ok) 18%,transparent); color:var(--ok)}
+  .cf-medium{background:color-mix(in srgb,var(--warn) 18%,transparent); color:var(--warn)}
+  .cf-low{background:color-mix(in srgb,var(--err) 18%,transparent); color:var(--err)}
+  .doc-view{background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:13px;
+    margin-top:10px; max-height:520px; overflow:auto; font-size:12.5px; line-height:1.75}
+  .doc-view h1,.doc-view h2,.doc-view h3{margin:13px 0 6px}
+  .doc-view h1{font-size:17px} .doc-view h2{font-size:15px} .doc-view h3{font-size:13.5px}
+  .doc-view table{border-collapse:collapse; width:100%; margin:8px 0; font-size:11.5px}
+  .doc-view th,.doc-view td{border:1px solid var(--line); padding:4px 7px; text-align:left}
+  .doc-view code{background:var(--elev); padding:1px 4px; border-radius:3px; font-family:var(--mono); font-size:11px}
+  .doc-view pre{background:var(--elev); padding:9px; border-radius:6px; overflow:auto}
+
+  .ev{display:flex; gap:9px; font-size:11.5px; padding:5px 0; border-bottom:1px solid var(--line); flex-wrap:wrap}
+  .ev:last-child{border-bottom:none}
+  .ev .t{color:var(--fg3); font-family:var(--mono); flex:none}
+
+  /* ======================================================================
+     证据台 · 视觉语言层
+     ----------------------------------------------------------------------
+     这层不是装饰，是「让可信度可读」：
+       · 证据等级（A/B/C/D）用固定色带，扫一眼就知道这条结论硬不硬
+       · 衬线标题 + 无衬线数据，编辑排版的分工
+       · 极轻的纸张纹理，让大面积深色不显得像终端
+     ====================================================================== */
+  body[data-design="evidence"] {
+    /* 证据等级四色 —— 全系统唯一语义色带 */
+    --tier-a: #6fa870;
+    --tier-b: #7f9ec4;
+    --tier-c: #d4933a;
+    --tier-d: #8a8a80;
+  }
+
+  /* 纸张纹理：只用极轻的噪点，不干扰阅读 */
+  body[data-design="evidence"]::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  body[data-design="evidence"] > * { position: relative; z-index: 1; }
+
+  /* 标题用衬线，正文数据用无衬线 */
+  body[data-design="evidence"] .hero h1 {
+    font-family: var(--font);
+    font-weight: 400;
+    letter-spacing: -.02em;
+    font-size: 30px;
+  }
+  /* 段落与结论正文也用衬线 —— 这是「读」的内容，不是「操作」的界面 */
+  body[data-design="evidence"] .hero p,
+  body[data-design="evidence"] .claim-text,
+  body[data-design="evidence"] .doc-view p,
+  body[data-design="evidence"] .doc-view li {
+    font-family: var(--font);
+  }
+  body[data-design="evidence"] .doc-view h1,
+  body[data-design="evidence"] .doc-view h2,
+  body[data-design="evidence"] .doc-view h3 {
+    font-family: var(--font);
+    font-weight: 400;
+  }
+  body[data-design="evidence"] .hero h1::after {
+    content: ""; display: block; width: 44px; height: 2px;
+    background: var(--ac); margin-top: 12px;
+  }
+  body[data-design="evidence"] .sec-title {
+    font-family: var(--font);
+    font-weight: 400;
+    font-size: 15px;
+    letter-spacing: .08em;
+    text-transform: none;
+    color: var(--fg2);
+    border-bottom: 1px solid var(--line2);
+    padding-bottom: 8px;
+  }
+
+  /* 证据等级徽章：左侧竖色条 + 等宽标签 */
+  body[data-design="evidence"] .chain-item {
+    border-left: 2px solid var(--line2);
+    padding-left: 9px;
+    margin-left: -11px;
+  }
+  body[data-design="evidence"] .chain-item.tA { border-left-color: var(--tier-a); }
+  body[data-design="evidence"] .chain-item.tB { border-left-color: var(--tier-b); }
+  body[data-design="evidence"] .chain-item.tC { border-left-color: var(--tier-c); }
+  body[data-design="evidence"] .chain-item.tD { border-left-color: var(--tier-d); }
+  body[data-design="evidence"] .badge {
+    background: none !important;
+    border: none !important;
+    padding: 0;
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  body[data-design="evidence"] .b-supported { color: var(--ok); }
+  body[data-design="evidence"] .b-draft { color: var(--warn); }
+  body[data-design="evidence"] .b-other { color: var(--fg3); }
+  body[data-design="evidence"] .chain-tier {
+    background: none !important;
+    border: none !important;
+    font-weight: 700;
+    letter-spacing: .06em;
+  }
+  body[data-design="evidence"] .chain-item.tA .chain-tier { color: var(--tier-a); }
+  body[data-design="evidence"] .chain-item.tB .chain-tier { color: var(--tier-b); }
+  body[data-design="evidence"] .chain-item.tC .chain-tier { color: var(--tier-c); }
+  body[data-design="evidence"] .chain-item.tD .chain-tier { color: var(--tier-d); }
+
+  /* 结论卡：左侧色条就是状态本身 */
+  body[data-design="evidence"] .claim {
+    background: none;
+    border: none;
+    border-left: 3px solid var(--line2);
+    border-radius: 0;
+    padding: 10px 0 10px 15px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  body[data-design="evidence"] .claim:last-child { border-bottom: none; }
+  body[data-design="evidence"] .claim.s-supported { border-left-color: var(--ok); }
+  body[data-design="evidence"] .claim.s-draft { border-left-color: var(--warn); }
+  body[data-design="evidence"] .claim.s-refuted { border-left-color: var(--err); }
+  body[data-design="evidence"] .claim-text {
+    font-family: var(--font);
+    font-weight: 400;
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
+  /* KPI：编辑风格 —— 大而细的数字，小型大写的标签 */
+  body[data-design="evidence"] .kpi {
+    background: none;
+    border: none;
+    border-left: 1px solid var(--line2);
+    border-radius: 0;
+    padding: 2px 0 2px 13px;
+  }
+  body[data-design="evidence"] .kpi .v {
+    font-family: var(--font);
+    font-size: 27px;
+    font-weight: 400;
+    letter-spacing: -.03em;
+    line-height: 1.1;
+  }
+  body[data-design="evidence"] .kpi .k {
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+  body[data-design="evidence"] .kpis { gap: 18px; }
+
+  /* 应用卡片：去阴影，用左侧细线区分层级 */
+  body[data-design="evidence"] .app-card {
+    box-shadow: none;
+    border-left: 2px solid var(--line2);
+  }
+  body[data-design="evidence"] .app-card:hover {
+    transform: none;
+    border-left-color: var(--ac);
+    background: var(--elev);
+  }
+  body[data-design="evidence"] .app-card .nm {
+    font-family: var(--font);
+    font-weight: 400;
+    font-size: 15px;
+  }
+
+  /* 筛选按钮：下划线式，像期刊的分类标签 */
+  body[data-design="evidence"] .chip {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: 4px 0;
+    margin-right: 16px;
+    font-size: 11.5px;
+    letter-spacing: .05em;
+    color: var(--fg3);
+    cursor: pointer;
+  }
+  body[data-design="evidence"] .chip:hover { color: var(--fg2); }
+  body[data-design="evidence"] .chip.on {
+    color: var(--fg);
+    border-bottom-color: var(--ac);
+  }
+
+  /* 面板：去填充，用细边框划分 —— 减少视觉噪音 */
+  body[data-design="evidence"] .panel {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 0;
+  }
+
+  /* 顶栏：下边框加粗一点，像期刊页眉 */
+  body[data-design="evidence"] header {
+    border-bottom: 2px solid var(--line);
+  }
+  body[data-design="evidence"] .tab.on {
+    background: none;
+    border-color: var(--ac);
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  /* 依赖图：工程图纸风格 —— 直角、细线、无圆角 */
+  body[data-design="evidence"] .dep-map {
+    background: var(--bg);
+    border: 1px solid var(--line2);
+    border-radius: 0;
+    /* 极淡的方格纸底纹 */
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+  }
+  body[data-design="evidence"] .dm-node rect {
+    rx: 0;
+  }
+  body[data-design="evidence"] .dm-node text {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: .01em;
+  }
+  body[data-design="evidence"] .dm-node .lv {
+    font-size: 8.5px;
+    letter-spacing: .05em;
+  }
+  body[data-design="evidence"] .dep-map .dm-head {
+    font-family: var(--font);
+    font-weight: 400;
+    letter-spacing: .05em;
+    text-transform: none;
+    font-size: 11.5px;
+  }
+
+  /* 表格：编辑式，无竖线，靠对齐与留白 */
+  body[data-design="evidence"] th {
+    font-size: 9.5px;
+    letter-spacing: .1em;
+    border-bottom: 1px solid var(--line2);
+  }
+  body[data-design="evidence"] td {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .empty{color:var(--fg3); font-size:12.5px; padding:14px 0}
+  .spin{display:inline-block; width:12px; height:12px; border:2px solid var(--line2);
+    border-top-color:var(--ac); border-radius:50%; animation:sp .65s linear infinite; vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* ======================================================================
+     设计覆盖层 —— 由 /api/_platform/designs 返回的 token 注入
+     ----------------------------------------------------------------------
+     外壳自己的变量（--bg/--panel/...）全部改读 --d-*，
+     --d-* 由 JS 按选中的设计写入。这样换设计不用改 HTML 结构。
+     ====================================================================== */
+  :root {
+    --bg: var(--d-bg, #0b0d12);
+    --panel: var(--d-panel, #12151d);
+    --elev: var(--d-elev, #181c26);
+    --line: var(--d-line, #232936);
+    --line2: var(--d-line2, #333c4d);
+    --fg: var(--d-fg, #e8ecf4);
+    --fg2: var(--d-fg2, #a2adc0);
+    --fg3: var(--d-fg3, #697586);
+    --ac: var(--d-ac, #5b93f8);
+    --ac2: var(--d-ac2, #1e3559);
+    --ok: var(--d-ok, #3ddc97);
+    --warn: var(--d-warn, #fbbf24);
+    --err: var(--d-err, #fb7185);
+    --radius: var(--d-radius, 8px);
+    --radius-lg: var(--d-radiusLg, 12px);
+    --header-h: var(--d-headerH, 52px);
+    --gap: var(--d-gap, 8px);
+    --shadow: var(--d-shadow, 0 8px 28px rgba(0,0,0,.32));
+  }
+  /* 让圆角跟随设计 */
+  header { border-radius: 0; }
+  .tab, .icon-btn, .btn, .app-card, .panel, .list-item { border-radius: var(--radius); }
+  .app-card, .panel { border-radius: var(--radius-lg); }
+  header { height: var(--header-h); min-height: var(--header-h); padding: 0 14px; }
+  .tabs { gap: var(--gap); }
+
+  /* 极简设计（radius=0）时去掉一切圆角 */
+  .no-radius *, .no-radius *::before { border-radius: 0 !important; }
+
+  /* ---------- 模式（专家 / 小白） ---------- */
+  .tabs.rail { flex-direction: column; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="mark">B</span><span>bench</span></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="actions">
+    <button class="mode-switch" id="btn-mode" title="切换专家/小白模式">
+      <span class="m-dot"></span><span id="mode-label">小白</span>
+    </button>
+    <div class="designer">
+      <button class="icon-btn" id="btn-design" title="一键切换外壳设计"></button>
+      <div class="designer-pop" id="designer-pop">
+        <div class="dp-head">
+          <span>切换外壳</span>
+          <a href="/designs" target="_blank" class="dp-more">详细对比 ↗</a>
+        </div>
+        <div class="dp-grid" id="dp-grid"></div>
+      </div>
+    </div>
+    <button class="icon-btn" id="btn-home" title="首页"></button>
+    <button class="icon-btn" id="btn-manage" title="应用管理"></button>
+    <button class="icon-btn" id="btn-theme" title="切换主题"></button>
+    <button class="icon-btn" id="btn-reload" title="重新加载当前应用"></button>
+  </div>
+</header>
+
+<main>
+  <div id="welcome">
+    <div class="home-tabs" id="home-tabs">
+      <button class="htab on" data-h="apps">应用</button>
+      <button class="htab" data-h="health">体检</button>
+      <button class="htab" data-h="kernel">知识层</button>
+    </div>
+
+    <div class="welcome-inner workbench" id="h-apps">
+      <!-- 主工作区：应用与依赖图 -->
+      <div class="ws-main">
+        <div class="ws-head">
+          <h1>工作台</h1>
+          <span class="ws-meta" id="app-count"></span>
+        </div>
+
+        <div class="layer-legend" id="layer-legend"></div>
+        <div class="dep-map" id="dep-map"></div>
+        <div id="layer-groups"></div>
+      </div>
+
+      <!-- 侧栏：管理 + 说明。低频操作，不与主区争夺注意力 -->
+      <aside class="ws-side">
+        <div class="side-block">
+          <div class="side-h">应用管理 <span id="mgr-hint">新建 / 删除</span></div>
+          <div class="field-col">
+            <label class="fld">
+              <span>应用 id</span>
+              <input type="text" id="new-id" placeholder="my-app" />
+            </label>
+            <label class="fld">
+              <span>显示名</span>
+              <input type="text" id="new-name" placeholder="我的应用" />
+            </label>
+            <div class="fld-row">
+              <label class="fld" style="flex:0 0 62px">
+                <span>图标</span>
+                <input type="text" id="new-icon" value="▦" maxlength="2" />
+              </label>
+              <label class="fld">
+                <span>模板</span>
+                <select id="new-tpl"></select>
+              </label>
+            </div>
+            <button class="btn" id="btn-create">创建应用</button>
+            <div id="create-flash"></div>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-h">已安装</div>
+          <table class="mgr-table">
+            <tbody id="mgr-body"></tbody>
+          </table>
+        </div>
+
+        <div class="side-block side-note">
+          <div class="side-h">约定</div>
+          <p>应用在 <code>bench/apps/&lt;id&gt;/</code> 下自描述：<code>app.json</code> 声明元数据，
+            <code>server.mjs</code> 导出路由，<code>public/</code> 放页面。</p>
+          <p>新增或删除目录即刻生效，无需重启。</p>
+        </div>
+      </aside>
+    </div>
+
+    <div class="welcome-inner" id="h-health" hidden>
+      <div class="hero">
+        <h1>体检</h1>
+        <p>闭环是否成立、有没有问题、能力是否可用、哪里慢。全部来自真实运行时数据。</p>
+      </div>
+      <div id="hd-banner"></div>
+      <div class="sec-title">闭环 <span class="r">研究 → 结论 → 证据 → 实验 → 复习</span></div>
+      <div class="panel"><div class="loop" id="hd-loop"></div><div id="hd-loop-note" class="muted" style="margin-top:9px"></div></div>
+      <div class="sec-title">问题清单 <span class="r" id="hd-issue-cnt"></span></div>
+      <div class="panel"><div id="hd-issues"></div></div>
+      <div class="sec-title">进程 <span class="r"><button class="btn ghost" id="hd-refresh">刷新</button></span></div>
+      <div class="panel"><div class="kpis" id="hd-proc"></div></div>
+      <div class="sec-title">观测 <span class="r" id="hd-obs-note"></span></div>
+      <div class="panel">
+        <div class="kpis" id="hd-obs"></div>
+        <table style="margin-top:13px"><thead><tr><th>路由</th><th>次数</th><th>平均</th><th>最大</th><th>错误</th></tr></thead><tbody id="hd-routes"></tbody></table>
+      </div>
+      <div class="sec-title">应用 <span class="r" id="hd-app-note"></span></div>
+      <div class="panel"><table><thead><tr><th>应用</th><th>层</th><th>后端</th><th>路由</th><th>状态</th></tr></thead><tbody id="hd-apps"></tbody></table></div>
+      <div class="sec-title">慢请求 / 错误日志 <span class="r" id="hd-trace-note"></span></div>
+      <div class="panel"><table><thead><tr><th>时间</th><th>请求</th><th>状态</th><th>耗时</th><th>trace</th></tr></thead><tbody id="hd-trace"></tbody></table></div>
+    </div>
+
+    <div class="welcome-inner" id="h-kernel" hidden>
+      <div class="hero">
+        <h1>知识层</h1>
+        <p>结论必须挂证据才能升级，证据必须过闸门才算数。下面是全部结论、知识库、技能与变更记录。</p>
+      </div>
+      <div class="sec-title">总览 <span class="r"><button class="btn ghost" id="kn-refresh">刷新</button></span></div>
+      <div class="panel"><div class="kpis" id="kn-kpis"></div></div>
+      <div class="sec-title">结论 <span class="r" id="kn-cnt"></span></div>
+      <div class="panel">
+        <div class="row" style="margin-bottom:13px" id="kn-filters">
+          <button class="chip on" data-f="all">全部</button>
+          <button class="chip" data-f="supported">有支持</button>
+          <button class="chip" data-f="draft">草稿</button>
+          <button class="chip" data-f="warn">有警告</button>
+        </div>
+        <div id="kn-claims"></div>
+      </div>
+      <div class="sec-title">知识库 <span class="r" id="kn-kb-stat"></span></div>
+      <div class="panel"><div id="kn-kb"></div></div>
+      <div class="sec-title">技能 <span class="r" id="kn-sk-stat"></span></div>
+      <div class="panel"><div id="kn-sk"></div></div>
+      <div class="sec-title">最近变更 <span class="r">谁在什么时候改了什么，因为什么</span></div>
+      <div class="panel"><div id="kn-events"></div></div>
+    </div>
+  </div>
+
+  <div class="frame-wrap" id="frame-wrap">
+    <iframe id="frame" title="app"></iframe>
+  </div>
+</main>
+
+<script src="/static/theme-derive.js"></script>
+<script src="/static/kit.js"></script>
+<script>
+// 图标辅助 —— 图标是等线几何标记，不是 emoji
+// sprite 由 /static/icons.svg 提供（服务端从 lib/icons.mjs 生成）
+function icon(name, size, cls) {
+  const s = size || 16;
+  const c = cls || "ico";
+  return `<svg class="${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+    aria-hidden="true"><use href="/static/icons.svg#i-${name}"/></svg>`;
+}
+
+// 应用/层级的图标名映射（服务端也会返回，这里做前端兜底）
+const APP_ICON = {
+  shell: "shell", mode: "mode", "design-system": "design-system",
+  labset: "labset", research: "research", learn: "learn", scratchpad: "scratchpad",
+};
+const LAYER_ICON = { platform: "layer-platform", core: "layer-core", app: "layer-app", lab: "layer-lab" };
+function appIconName(id) { return APP_ICON[id] || "layer-app"; }
+function layerIconName(id, fromServer) {
+  // 服务端返回的 icon 已经是图标名（不再是 emoji）；兜底用本地映射
+  if (fromServer && /^layer-/.test(fromServer)) return fromServer;
+  return LAYER_ICON[id] || "layer-app";
+}
+</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const api = async (p, o = {}) => {
+  const r = await fetch(p, { headers: { "Content-Type": "application/json" }, ...o });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+  return d;
+};
+const flash = (el, kind, txt) => {
+  if (!el) return;
+  el.innerHTML = txt ? `<div class="flash ${kind}">${esc(txt)}</div>` : "";
+};
+
+const state = { apps: [], templates: [], layers: [], grouped: [], health: {}, impact: {}, edges: [], edgeStats: null, current: null, theme: "dark", design: "linear", designObj: null, mode: "novice" };
+
+// ===========================================================================
+// 主题
+// ===========================================================================
+/** 把主题 + 模式 + 设计变量一起推给 iframe 内的应用。 */
+function pushTheme() {
+  try {
+    const f = $("frame");
+    if (!f || !f.contentWindow) return;
+    f.contentWindow.postMessage({
+      type: "bench:theme",
+      mode: state.theme,
+      appMode: state.mode,
+      design: state.design,
+      vars: currentVars(),
+    }, "*");
+    f.contentDocument?.documentElement?.setAttribute("data-theme", state.theme);
+    f.contentDocument?.documentElement?.setAttribute("data-mode", state.mode);
+  } catch { /* 未加载 */ }
+}
+
+function applyTheme(mode) {
+  state.theme = mode;
+  document.documentElement.dataset.theme = mode;
+  $("btn-theme").innerHTML = icon("theme", 16);
+  $("btn-theme").title = mode === "dark" ? "切换到浅色" : "切换到深色";
+
+  // 关键：设计 token 是内联写到 :root 的，优先级高于 [data-theme] 规则，
+  // 所以切主题时必须重算 --d-* 变量，否则颜色不会变。
+  if (state.designObj && window.BenchThemeDerive) {
+    applyDesign(state.designObj, mode);
+  }
+
+  pushTheme();
+}
+
+/** 读出当前主题的全部关键变量，供 iframe 内应用复用。 */
+function currentVars() {
+  const cs = getComputedStyle(document.documentElement);
+  const keys = [
+    ["--bench-bg", "--bg"],
+    ["--bench-panel", "--panel"],
+    ["--bench-elev", "--elev"],
+    ["--bench-line", "--line"],
+    ["--bench-line2", "--line2"],
+    ["--bench-fg", "--fg"],
+    ["--bench-fg2", "--fg2"],
+    ["--bench-fg3", "--fg3"],
+    ["--bench-ac", "--ac"],
+    ["--bench-ok", "--ok"],
+    ["--bench-warn", "--warn"],
+    ["--bench-err", "--err"],
+  ];
+  const out = {};
+  for (const [benchVar, srcVar] of keys) {
+    const v = cs.getPropertyValue(srcVar).trim();
+    if (v) out[benchVar] = v;
+  }
+  return out;
+}
+
+// ===========================================================================
+// 设计（10 款方案）
+//
+// 关键：每款设计只定义一套 token（7 深 3 浅）。主题切换按钮需要另一套，
+// 所以这里按「当前主题」选：token 自带主题匹配就直接用，不匹配就用
+// deriveTokens() 程序派生（明度反相 + 保留色相）。
+// ===========================================================================
+
+/** 缓存派生结果，避免每次切换都重算。 */
+const derivedCache = new Map();
+
+function tokensFor(d, theme) {
+  const base = d.tokens;
+  if ((base.theme ?? "dark") === theme) return base;
+  const key = d.id + "@" + theme;
+  if (!derivedCache.has(key)) derivedCache.set(key, BenchThemeDerive.deriveTokens(base, theme));
+  return derivedCache.get(key);
+}
+
+function applyDesign(d, theme) {
+  const r = document.documentElement;
+  const t = tokensFor(d, theme ?? state.theme);
+  const map = {
+    "--d-bg": t.bg, "--d-panel": t.panel, "--d-elev": t.elev,
+    "--d-line": t.line, "--d-line2": t.line2,
+    "--d-fg": t.fg, "--d-fg2": t.fg2, "--d-fg3": t.fg3,
+    "--d-ac": t.ac, "--d-ac2": t.ac2,
+    "--d-ok": t.ok, "--d-warn": t.warn, "--d-err": t.err,
+    "--d-radius": t.radius, "--d-radiusLg": t.radiusLg,
+    "--d-headerH": t.headerH, "--d-gap": t.gap, "--d-shadow": t.shadow,
+  };
+  for (const [k, v] of Object.entries(map)) if (v) r.style.setProperty(k, v);
+
+  // 字体
+  if (t.font) r.style.setProperty("--font", t.font);
+  if (t.fontUi) r.style.setProperty("--font-ui", t.fontUi);
+  if (t.fontMono) r.style.setProperty("--mono", t.fontMono);
+
+  // 零圆角设计：去掉所有圆角
+  document.body.classList.toggle("no-radius", t.radius === "0px");
+
+  state.design = d.id;
+  state.designObj = d;
+  // 设计专属视觉层靠这个属性激活（见 CSS 里的 body[data-design="evidence"]）
+  document.body.dataset.design = d.id;
+  // 布局结构：9 种 layout 真的会改变排版（之前只定义了名字，从未应用）
+  document.body.dataset.layout = d.layout || "top-tabs";
+  document.title = "bench · " + d.name;
+  if (document.getElementById("dp-grid")) renderDesigner();
+
+  // 通知 iframe
+  pushTheme();
+}
+
+async function loadDesign() {
+  try {
+    const d = await api("/api/_platform/designs");
+    allDesigns = d.designs ?? [];
+    const cur = allDesigns.find((x) => x.id === d.current) ?? allDesigns[0];
+    if (cur) applyDesign(cur, state.theme);
+  } catch { /* 用默认 */ }
+}
+
+// ===========================================================================
+// 模式（专家 / 小白）
+// ===========================================================================
+function applyMode(mode) {
+  state.mode = mode === "expert" ? "expert" : "novice";
+  document.documentElement.dataset.mode = state.mode;
+  const btn = $("btn-mode");
+  btn.classList.toggle("expert", state.mode === "expert");
+  $("mode-label").textContent = state.mode === "expert" ? "专家" : "小白";
+  btn.title = state.mode === "expert"
+    ? "当前为专家模式（显示完整参数与堆栈）。点击切到小白模式"
+    : "当前为小白模式（术语带解释、隐藏高级参数）。点击切到专家模式";
+  pushTheme(); // 一并把模式推给应用
+}
+
+async function loadMode() {
+  try {
+    const d = await api("/api/_platform/mode");
+    applyMode(d.mode);
+  } catch { applyMode("novice"); }
+}
+
+$("btn-mode").onclick = async () => {
+  const next = state.mode === "expert" ? "novice" : "expert";
+  applyMode(next);
+  try { await api("/api/_platform/mode", { method: "POST", body: JSON.stringify({ mode: next }) }); } catch {}
+};
+
+// ===========================================================================
+// 内嵌设计切换器
+// ===========================================================================
+let allDesigns = [];
+
+function renderDesigner() {
+  const g = $("dp-grid");
+  g.innerHTML = allDesigns.map((d) => {
+    const t = d.tokens;
+    return `<button class="dp-item ${d.id === state.design ? "on" : ""}" data-d="${d.id}" title="${esc(d.tagline)} · 借鉴 ${esc(d.ref)}">
+      <span class="dp-swatch">
+        <i style="background:${t.bg}"></i>
+        <i style="background:${t.panel}"></i>
+        <i style="background:${t.ac}"></i>
+      </span>
+      <span style="flex:1;min-width:0">
+        <span class="dp-name">${esc(d.name)}</span><br>
+        <span class="dp-lay">${esc(d.layout)} · ${esc(t.radius)}</span>
+      </span>
+    </button>`;
+  }).join("");
+
+  g.querySelectorAll("[data-d]").forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.d;
+      const d = allDesigns.find((x) => x.id === id);
+      if (!d) return;
+
+      // 选设计时跟随设计自带的主题（有些设计本身是浅色底，配合一下更协调）
+      const wantTheme = d.tokens.theme === "light" ? "light" : "dark";
+      if (wantTheme !== state.theme) {
+        state.theme = wantTheme;
+        document.documentElement.dataset.theme = wantTheme;
+        $("btn-theme").innerHTML = icon("theme", 16);
+        $("btn-theme").title = wantTheme === "dark" ? "切换到浅色" : "切换到深色";
+        try { await api("/api/_platform/theme", { method: "POST", body: JSON.stringify({ mode: wantTheme }) }); } catch {}
+      }
+
+      applyDesign(d, wantTheme);
+      renderDesigner();
+
+      try { await api("/api/_platform/design", { method: "POST", body: JSON.stringify({ id }) }); } catch {}
+      $("designer-pop").classList.remove("open");
+    };
+  });
+}
+
+$("btn-design").onclick = (e) => {
+  e.stopPropagation();
+  const pop = $("designer-pop");
+  pop.classList.toggle("open");
+  if (pop.classList.contains("open")) renderDesigner();
+};
+
+// 点外面关闭
+document.addEventListener("click", (e) => {
+  const pop = $("designer-pop");
+  if (!pop.classList.contains("open")) return;
+  if (e.target.closest(".designer")) return;
+  pop.classList.remove("open");
+});
+
+// Esc 关闭
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") $("designer-pop").classList.remove("open");
+});
+
+async function loadTheme() {
+  try {
+    const t = await api("/api/_platform/theme");
+    // 只设主题标识，不调 applyDesign（那时 designObj 可能还没加载）
+    state.theme = t.mode === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = state.theme;
+    $("btn-theme").innerHTML = icon("theme", 16);
+    $("btn-theme").title = state.theme === "dark" ? "切换到浅色" : "切换到深色";
+  } catch {
+    state.theme = "dark";
+    document.documentElement.dataset.theme = "dark";
+  }
+}
+
+$("btn-theme").onclick = async () => {
+  const next = state.theme === "dark" ? "light" : "dark";
+  applyTheme(next);
+  try { await api("/api/_platform/theme", { method: "POST", body: JSON.stringify({ mode: next }) }); } catch {}
+};
+
+// ===========================================================================
+// 应用列表
+// ===========================================================================
+async function loadApps() {
+  const d = await api("/api/_platform/apps");
+  state.apps = d.apps || [];
+  state.templates = d.templates || [];
+  state.layers = d.layers || [];
+  state.grouped = d.grouped || [];
+  state.impact = d.impact || {};
+  state.edges = d.edges || [];
+  state.edgeStats = d.edgeStats || null;
+  // 并发探测后端健康（单个应用崩了不影响其余）
+  try {
+    const h = await api("/api/_platform/apps/health");
+    state.health = Object.fromEntries((h.apps ?? []).map((x) => [x.id, x]));
+  } catch {
+    state.health = {};
+  }
+
+  renderTabs();
+  renderGrid();
+  renderManager();
+  const bad = Object.values(state.health).filter((x) => !x.ok).length;
+  $("app-count").textContent = bad
+    ? `${state.apps.length} 个 · ${bad} 个异常`
+    : `${state.apps.length} 个`;
+}
+
+function renderTabs() {
+  const box = $("tabs");
+  box.innerHTML = "";
+  for (const a of state.apps) {
+    if (!a.enabled) continue;
+    const b = document.createElement("button");
+    b.className = "tab" + (state.current === a.id ? " on" : "");
+    b.innerHTML = `<span class="ic">${icon(appIconName(a.id), 15)}</span><span>${esc(a.name)}</span>` +
+      (a.error ? `<span class="dotx" style="background:var(--err)"></span>` : "");
+    b.title = a.tagline || a.id;
+    b.onclick = () => openApp(a.id);
+    box.appendChild(b);
+  }
+  // 管理按钮
+  const mg = document.createElement("button");
+  mg.className = "tab";
+  mg.innerHTML = `<span class="ic">${icon("manage", 15)}</span><span>新建</span>`;
+  mg.style.color = "var(--fg3)";
+  mg.onclick = () => { showWelcome(); setTimeout(() => $("new-id").focus(), 60); };
+  box.appendChild(mg);
+}
+
+/** 层级配色：跟随当前设计的主色系派生，保证换设计后整体协调。 */
+function layerTone(layerId) {
+  // L0 用弱化的前景色，L1 用主色，L2 用成功色，L3 用警告色
+  const map = {
+    platform: "color-mix(in srgb, var(--ac) 28%, var(--fg3))",
+    core: "var(--ac)",
+    app: "var(--ok)",
+    lab: "var(--warn)",
+  };
+  return map[layerId] ?? "var(--fg3)";
+}
+
+/**
+ * 依赖关系图：横向 = 分层（L0 在最左），节点是应用，箭头 = requires。
+ * hover 一个节点时，高亮它的下游（会被它拖累的）和上游（它依赖的）。
+ */
+function renderDepMap() {
+  const box = $("dep-map");
+  const apps = state.apps.filter((a) => a.enabled);
+  const edges = state.edges.filter((e) => apps.some((a) => a.id === e.from) && apps.some((a) => a.id === e.to));
+
+  const st = state.edgeStats;
+  if (!apps.length) { box.innerHTML = ""; return; }
+  if (!edges.length) {
+    box.innerHTML = `<div class="dm-head">依赖图 <span class="dm-stat">暂无依赖关系（应用的 app.json 里加 requires 后出现）</span></div>`;
+    return;
+  }
+
+  // 按层分列
+  const LAYERS = ["platform", "core", "app", "lab"];
+  const byLayer = Object.fromEntries(LAYERS.map((l) => [l, apps.filter((a) => a.layer === l)]));
+
+  const COL_W = 140, NODE_W = 116, NODE_H = 32, ROW_H = 42, PAD_X = 8, PAD_Y = 34;
+  const cols = LAYERS.filter((l) => byLayer[l].length > 0);
+  const W = PAD_X * 2 + cols.length * COL_W;
+  const maxRows = Math.max(...cols.map((l) => byLayer[l].length), 1);
+  const H = PAD_Y + maxRows * ROW_H + 18;
+
+  const pos = {};
+  const colIndex = Object.fromEntries(cols.map((l, i) => [l, i]));
+  for (const l of cols) {
+    byLayer[l].forEach((a, i) => {
+      pos[a.id] = {
+        x: PAD_X + colIndex[l] * COL_W + (COL_W - NODE_W) / 2,
+        y: PAD_Y + i * ROW_H,
+        layer: l,
+      };
+    });
+  }
+
+  const layerColor = Object.fromEntries((state.layers ?? []).map((l) => [l.id, layerTone(l.id)]));
+  const health = state.health ?? {};
+
+  // 边的路径：从右端出发到左端（下游 → 上游），用曲线避免重叠
+  const paths = edges.map((e, i) => {
+    const a = pos[e.from], b = pos[e.to];
+    if (!a || !b) return "";
+    const x1 = a.x, y1 = a.y + NODE_H / 2;
+    const x2 = b.x + NODE_W, y2 = b.y + NODE_H / 2;
+    const dx = Math.max(28, Math.abs(x1 - x2) / 2);
+    const d = `M${x1},${y1} C${x1 - dx},${y1} ${x2 + dx},${y2} ${x2},${y2}`;
+    const col = e.bad ? "var(--err)" : "var(--line2)";
+    return `<path class="dm-edge" data-edge="${esc(e.from)}>${esc(e.to)}" d="${d}"
+      fill="none" stroke="${col}" stroke-width="1.2"
+      ${e.bad ? 'stroke-dasharray="3 2"' : ""} marker-end="url(#dmar)" />`;
+  }).join("");
+
+  // 节点
+  const nodes = apps.map((a) => {
+    const p = pos[a.id];
+    if (!p) return "";
+    const c = layerColor[a.layer] ?? "var(--fg3)";
+    const h = health[a.id];
+    const broken = h && !h.ok;
+    const stroke = broken ? "var(--err)" : c;
+    const label = a.name.length > 8 ? a.name.slice(0, 7) + "…" : a.name;
+    // 圆角跟随设计：证据台用直角（工程图纸感），其它设计保留圆角
+    const rx = document.body.dataset.design === "evidence" ? 0 : 6;
+    return `<g class="dm-node" data-node="${esc(a.id)}" transform="translate(${p.x},${p.y})">
+      <rect width="${NODE_W}" height="${NODE_H}" rx="${rx}"
+        style="fill:var(--elev);stroke:${stroke}" stroke-width="1.3" />
+      <use href="/static/icons.svg#i-${appIconName(a.id)}" x="9" y="8" width="14" height="14"
+        style="color:${stroke}" />
+      <text x="30" y="17" fill="var(--fg)" font-family="inherit" font-size="10.5">${esc(label)}</text>
+      <text class="lv" x="30" y="27" fill="var(--fg3)" font-size="8">${esc(a.id)}${broken ? " · 异常" : ""}</text>
+    </g>`;
+  }).join("");
+
+  // 层标题
+  const heads = cols.map((l) => {
+    const meta = (state.layers ?? []).find((x) => x.id === l);
+    const x = PAD_X + colIndex[l] * COL_W + (COL_W - NODE_W) / 2;
+    return `<text x="${x}" y="16" style="fill:${layerColor[l] ?? "var(--fg3)"}"
+      font-size="9.5" font-weight="700" letter-spacing=".04em">${esc(meta?.name ?? l)}</text>`;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="dm-head">
+      依赖图
+      <span class="dm-stat">${edges.length} 条边 · ${st?.crossLayer ?? 0} 跨层 · ${st?.violations ? st.violations + " 处违规" : "无违规"}</span>
+      <span class="dm-stat" style="margin-left:auto">悬停节点看影响链</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="dmar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="var(--line2)"/>
+        </marker>
+      </defs>
+      ${heads}
+      ${paths}
+      ${nodes}
+    </svg>
+    <div class="dm-legend">
+      <span><i style="background:var(--line2)"></i> 依赖（箭头指向被依赖方）</span>
+      <span><i style="background:var(--err)"></i> 跨层违规</span>
+      <span>悬停：高亮上下游 · 点击：打开应用</span>
+    </div>`;
+
+  // 交互：hover 高亮
+  const svg = box.querySelector("svg");
+  const hl = (id, on) => {
+    if (!id) return;
+    const up = new Set();   // 它依赖的
+    const down = new Set(); // 依赖它的
+    const walk = (cur, set, dir) => {
+      for (const e of edges) {
+        if (dir === "up" && e.from === cur && !set.has(e.to)) { set.add(e.to); walk(e.to, set, "up"); }
+        if (dir === "down" && e.to === cur && !set.has(e.from)) { set.add(e.from); walk(e.from, set, "down"); }
+      }
+    };
+    walk(id, up, "up");
+    walk(id, down, "down");
+    const related = new Set([id, ...up, ...down]);
+
+    box.querySelectorAll(".dm-node").forEach((n) => {
+      const nid = n.dataset.node;
+      n.classList.toggle("hl", on && related.has(nid));
+      n.classList.toggle("dim", on && !related.has(nid));
+    });
+    box.querySelectorAll(".dm-edge").forEach((e2) => {
+      const [f, t] = e2.dataset.edge.split(">");
+      const rel = on && (related.has(f) && related.has(t));
+      e2.classList.toggle("hl", rel);
+      e2.classList.toggle("dim", on && !rel);
+    });
+  };
+
+  box.querySelectorAll(".dm-node").forEach((n) => {
+    const id = n.dataset.node;
+    n.addEventListener("mouseenter", () => hl(id, true));
+    n.addEventListener("mouseleave", () => hl(id, false));
+    n.addEventListener("click", () => openApp(id));
+  });
+}
+
+function renderGrid() {
+  renderDepMap();
+
+  // 层级图例
+  const legend = $("layer-legend");
+  legend.innerHTML = state.grouped.map((l) => `
+    <span class="lg-item">
+      <span class="lg-dot" style="background:${layerTone(l.id)}"></span>
+      ${icon(layerIconName(l.id, l.icon), 13)} <span class="lg-n">${esc(l.name)}</span>
+      <span class="lg-c">${l.apps.length}</span>
+    </span>`).join("");
+
+  // 按层分组渲染
+  const box = $("layer-groups");
+  box.innerHTML = "";
+
+  const visible = state.grouped.map((l) => ({ ...l, apps: l.apps.filter((a) => a.enabled) }));
+  const totalVisible = visible.reduce((n, l) => n + l.apps.length, 0);
+
+  if (!totalVisible) {
+    box.innerHTML = `<div class="empty">还没有应用。用下面的「应用管理」建一个。</div>`;
+    return;
+  }
+
+  for (const l of visible) {
+    const blk = document.createElement("div");
+    blk.className = "layer-block";
+    blk.dataset.level = String(l.level);
+
+    // 依赖图已经表达了层级结构与依赖关系，这里只做「进入应用」的入口。
+    // 层的说明文字放进 title，不再占版面（一个 section 只做一个职责）。
+    const head = `
+      <div class="layer-head" title="${esc(l.desc)}｜${esc(l.rule)}｜失效影响：${esc(l.failureImpact)}">
+        <span class="lh-icon" style="color:${layerTone(l.id)}">${icon(layerIconName(l.id, l.icon), 14)}</span>
+        <span class="lh-name" style="color:${layerTone(l.id)}">${esc(l.name)}</span>
+        <span class="lh-lv">L${l.level}</span>
+        <span class="lh-cnt">${l.apps.length}</span>
+      </div>`;
+
+    let body = "";
+    if (!l.apps.length) {
+      body = `<div class="layer-empty">（这一层暂时没有应用）</div>`;
+    } else {
+      body = `<div class="grid">` + l.apps.map((a) => {
+        const h = state.health[a.id];
+        const broken = h && !h.ok
+          ? `<div class="lay-broken">✗ 后端异常：${esc(h.note || "未知")}</div>` : "";
+        const warn = a.layerWarning ? `<div class="lay-warn">⚠ ${esc(a.layerWarning)}</div>` : "";
+        const dep = (a.depViolations && a.depViolations.length)
+          ? `<div class="lay-dep">✗ 依赖违规：${esc(a.depViolations.join("；"))}</div>` : "";
+        const promote = a.layer === "lab"
+          ? `<button class="promote" data-promote="${esc(a.id)}" title="把实验品转正到应用层">⬆ 转正</button>`
+          : "";
+        return `
+        <div class="app-card${(state.health[a.id] && !state.health[a.id].ok) ? " is-broken" : ""}" data-open="${esc(a.id)}">
+          <div class="top">
+            <span class="ico">${icon(appIconName(a.id), 18)}</span>
+            <span class="nm">${esc(a.name)}</span>
+            ${promote}
+          </div>
+          <div class="tg">${esc(a.tagline || "（无说明）")}</div>
+          ${broken}${warn}${dep}
+          <div class="meta">${esc(a.id)}${a.hasServer ? " · API" : ""}${a.hasData ? " · data" : ""}${(a.requires && a.requires.length) ? " · 依赖 " + a.requires.length + " 项" : ""}</div>
+        </div>`;
+      }).join("") + `</div>`;
+    }
+
+    blk.innerHTML = head + body;
+    box.appendChild(blk);
+  }
+
+  box.querySelectorAll("[data-open]").forEach((b) => {
+    b.onclick = (e) => {
+      if (e.target.closest("[data-promote]")) return; // 转正按钮自己处理
+      openApp(b.dataset.open);
+    };
+  });
+  box.querySelectorAll("[data-promote]").forEach((b) => {
+    b.onclick = async (e) => {
+      e.stopPropagation();
+      const id = b.dataset.promote;
+      if (!confirm(`把「${id}」从实验层转正到应用层？
+
+转正意味着它进入日常使用范围，需要保证稳定性。`)) return;
+      try {
+        await api(`/api/_platform/apps/${encodeURIComponent(id)}/layer`, {
+          method: "POST",
+          body: JSON.stringify({ layer: "app" }),
+        });
+        await loadApps();
+      } catch (err) {
+        alert("转正失败：" + err.message);
+      }
+    };
+  });
+}
+
+function renderManager() {
+  const tb = $("mgr-body");
+  tb.innerHTML = "";
+  // 模板下拉
+  const sel = $("new-tpl");
+  if (!sel.options.length) {
+    sel.innerHTML = state.templates.map((t) => `<option value="${t.id}">${t.label} — ${t.desc}</option>`).join("");
+  }
+
+  for (const a of state.apps) {
+    const tr = document.createElement("tr");
+    // 窄侧栏：只留名字 + id，能力信息用 hover 提示，不塞 chips
+    const caps = [a.hasServer ? "API" : "", a.hasPublic ? "页面" : "", a.hasData ? "data" : ""]
+      .filter(Boolean).join(" · ");
+    tr.innerHTML = `
+      <td>
+        <span class="mgr-name">${icon(appIconName(a.id), 13)}<span>${esc(a.name)}</span></span>
+        <span class="mgr-id">${esc(a.id)}${caps ? " · " + esc(caps) : ""}</span>
+      </td>
+      <td class="mgr-act"><button data-del="${esc(a.id)}" title="删除 ${esc(a.name)}">删除</button></td>`;
+    if (a.error) tr.title = a.error;
+    tb.appendChild(tr);
+  }
+  if (!state.apps.length) {
+    tb.innerHTML = `<tr><td class="empty">还没有应用</td></tr>`;
+  }
+
+  tb.onclick = async (e) => {
+    const id = e.target.dataset.del;
+    if (!id) return;
+    if (!confirm(`删除应用「${id}」？\n\n这会移除 bench/apps/${id}/ 整个目录。`)) return;
+    try {
+      await api("/api/_platform/apps/" + encodeURIComponent(id) + "?force=1", { method: "DELETE" });
+      if (state.current === id) showWelcome();
+      await loadApps();
+      flash($("create-flash"), "ok", `已删除 ${id}`);
+    } catch (err) {
+      flash($("create-flash"), "err", "删除失败：" + err.message);
+    }
+  };
+}
+
+// ===========================================================================
+// 打开应用
+// ===========================================================================
+function openApp(id) {
+  const a = state.apps.find((x) => x.id === id);
+  if (!a) return;
+  state.current = id;
+  $("welcome").classList.remove("on");
+  $("frame-wrap").classList.add("on");
+  const f = $("frame");
+  f.src = `/app/${id}/`;
+  f.onload = () => {
+    // 注入主题，并定时同步（应用可能后加载）
+    const sync = () => {
+      try {
+        f.contentDocument?.documentElement?.setAttribute("data-theme", state.theme);
+      } catch {}
+    };
+    sync();
+    setTimeout(sync, 120);
+    setTimeout(sync, 600);
+    // 应用加载完会发 bench:ready，这时把主题推过去
+    pushTheme();
+  };
+  renderTabs();
+  history.replaceState(null, "", `#${id}`);
+}
+
+function showWelcome(tab) {
+  state.current = null;
+  $("frame-wrap").classList.remove("on");
+  $("frame").src = "about:blank";
+  $("welcome").classList.add("on");
+  renderTabs();
+  if (tab && HOME_TABS.includes(tab)) switchHome(tab);
+  else history.replaceState(null, "", "#");
+}
+
+$("btn-home").onclick = showWelcome;
+$("btn-manage").onclick = () => {
+  showWelcome();
+  setTimeout(() => $("new-id").scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+};
+$("btn-reload").onclick = () => {
+  if (state.current) {
+    const f = $("frame");
+    f.src = `/app/${state.current}/?t=${Date.now()}`;
+  } else loadApps();
+};
+
+// ===========================================================================
+// 创建应用
+// ===========================================================================
+$("btn-create").onclick = async () => {
+  const id = $("new-id").value.trim();
+  const name = $("new-name").value.trim();
+  const icon = $("new-icon").value.trim() || "▦";
+  const template = $("new-tpl").value;
+  if (!id) return flash($("create-flash"), "err", "请填应用 id");
+
+  const btn = $("btn-create");
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const r = await api("/api/_platform/apps", {
+      method: "POST",
+      body: JSON.stringify({ id, name: name || id, icon, template }),
+    });
+    flash($("create-flash"), "ok",
+      `已创建 ${r.id}（模板 ${r.template}）\n文件：${r.files.join(", ")}\n\n现在可以直接打开它。`);
+    $("new-id").value = "";
+    $("new-name").value = "";
+    await loadApps();
+  } catch (e) {
+    flash($("create-flash"), "err", "创建失败：" + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+};
+
+$("new-id").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-create").click(); });
+
+// ===========================================================================
+// URL hash 路由
+// ===========================================================================
+function fromHash() {
+  const id = location.hash.replace(/^#/, "").trim();
+  if (id && state.apps.find((a) => a.id === id)) openApp(id);
+  else if (HOME_TABS.includes(id)) showWelcome(id);
+  else showWelcome();
+}
+
+window.addEventListener("hashchange", fromHash);
+window.addEventListener("message", (e) => {
+  if (e.data?.type === "bench:open" && e.data.id) openApp(e.data.id);
+  if (e.data?.type === "bench:ready") {
+    // 子应用就绪：把当前主题推给它
+    pushTheme();
+  }
+});
+
+// ===========================================================================
+// 首页三 Tab：应用 / 体检 / 知识层
+//
+// 设计意图：工作台只有一个入口。体检和知识层原本是独立页面（/status /kernel），
+// 用户要记三个地址；现在全部并入首页，用 Tab 切换。
+// ===========================================================================
+const HOME_TABS = ["apps", "health", "kernel"];
+const homeLoaded = { apps: false, health: false, kernel: false };
+
+function switchHome(tab) {
+  if (!HOME_TABS.includes(tab)) tab = "apps";
+  document.querySelectorAll(".htab").forEach((b) => b.classList.toggle("on", b.dataset.h === tab));
+  for (const t of HOME_TABS) {
+    const el = $("h-" + t);
+    if (el) el.hidden = t !== tab;
+  }
+  history.replaceState(null, "", tab === "apps" ? "#" : "#" + tab);
+  if (tab === "health" && !homeLoaded.health) { homeLoaded.health = true; loadHealthTab(); }
+  if (tab === "kernel" && !homeLoaded.kernel) { homeLoaded.kernel = true; loadKernelTab(); }
+}
+
+$("home-tabs").onclick = (e) => {
+  const b = e.target.closest(".htab");
+  if (b) switchHome(b.dataset.h);
+};
+
+// ---- 体检 ----
+const fmtMs = (x) => (x == null ? "—" : x >= 1000 ? (x / 1000).toFixed(1) + "s" : Math.round(x) + "ms");
+
+async function loadHealthTab() {
+  try {
+    const [st, met] = await Promise.all([
+      api("/api/_platform/status"),
+      api("/api/_platform/metrics").catch(() => null),
+    ]);
+
+    const kind = st.status === "healthy" ? "ok" : st.status === "degraded" ? "warn" : "err";
+    const label = st.status === "healthy" ? "健康" : st.status === "degraded" ? "降级" : "异常";
+    $("hd-banner").innerHTML = `<div class="banner ${kind}">
+      <span class="big">${esc(label)}</span>
+      <span class="desc">${st.issues?.length ? esc(st.issues.map((i) => i.msg).join("；")) : "所有维度正常，没有待处理问题。"}</span>
+      <span class="chip">${st.issues?.length || 0} 个问题</span>
+    </div>`;
+
+    const L = st.loop || {};
+    const nodes = [
+      ["结论", L.claims],
+      ["证据", L.evidences],
+      ["实验", L.runs],
+      ["产物", L.artifacts],
+    ];
+    $("hd-loop").innerHTML = nodes.map(([n, v], i) =>
+      `<span class="nd ${v > 0 ? "ok" : "bad"}"><span>${n}</span><b>${v ?? 0}</b></span>` +
+      (i < nodes.length - 1 ? `<span class="ar">→</span>` : "")
+    ).join("") + `<span class="ar">·</span><span class="nd ${L.closed ? "ok" : "bad"}"><span>闭环</span><b>${L.closed ? "✓" : "✗"}</b></span>`;
+    $("hd-loop-note").textContent =
+      `孤立结论 ${L.orphanClaims ?? 0} · 未过闸门的实验 ${L.ungatedRuns ?? 0}`;
+
+    const issues = st.issues || [];
+    $("hd-issue-cnt").textContent = `${issues.length} 个`;
+    $("hd-issues").innerHTML = issues.length
+      ? issues.map((i) => `<div class="issue"><span class="lv ${esc(i.level || "info")}">${esc(i.level || "info")}</span><span>${esc(i.msg)}</span></div>`).join("")
+      : `<div class="empty">没有待处理问题</div>`;
+
+    const p = st.process || {};
+    $("hd-proc").innerHTML = [
+      ["PID", p.pid ?? "—"],
+      ["Node", p.node ?? "—"],
+      ["运行时长", p.uptimeSec != null ? Math.round(p.uptimeSec / 60) + " 分钟" : "—"],
+      ["内存", p.memoryMB != null ? p.memoryMB + " MB" : "—"],
+      ["平台", p.platform ?? "—"],
+    ].map(([k, v]) => `<div class="kpi"><div class="v">${esc(String(v))}</div><div class="k">${k}</div></div>`).join("");
+
+    const o = st.observability || {};
+    $("hd-obs-note").textContent = o.status ? `状态：${o.status}` : "";
+    $("hd-obs").innerHTML = [
+      ["请求总数", met?.totalRequests ?? o.totalRequests ?? 0],
+      ["错误率", met?.errorRate != null ? (met.errorRate * 100).toFixed(2) + "%" : "—"],
+      ["慢请求", met?.slowCount ?? 0],
+      ["RPS", met?.rps ?? "—"],
+    ].map(([k, v]) => `<div class="kpi"><div class="v">${esc(String(v))}</div><div class="k">${k}</div></div>`).join("");
+
+    const routes = (met?.routes || []).slice(0, 8);
+    $("hd-routes").innerHTML = routes.length
+      ? routes.map((r) => `<tr><td class="mono">${esc(r.route)}</td><td class="mono">${r.count}</td>
+          <td class="mono">${fmtMs(r.avgMs)}</td><td class="mono">${fmtMs(r.maxMs)}</td>
+          <td class="mono" style="color:${r.errors ? "var(--err)" : "var(--fg3)"}">${r.errors || 0}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="empty">还没有请求记录</td></tr>`;
+
+    const apps = st.apps?.detail || [];
+    $("hd-app-note").textContent = `${st.apps?.total ?? apps.length} 个 · 异常 ${st.apps?.broken ?? 0}`;
+    $("hd-apps").innerHTML = apps.length
+      ? apps.map((a) => `<tr><td>${esc(a.icon || "")} ${esc(a.name)}</td>
+          <td class="mono">${esc(a.layerName || a.layer)}</td>
+          <td>${a.ok ? '<span style="color:var(--ok)">✓</span>' : '<span style="color:var(--err)">✗</span>'}</td>
+          <td class="mono">${a.routes ?? "—"}</td>
+          <td style="font-size:11px;color:var(--fg3)">${esc(a.note || "")}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="empty">无</td></tr>`;
+
+    const traces = met?.slowRecent || [];
+    $("hd-trace-note").textContent = `${traces.length} 条`;
+    $("hd-trace").innerHTML = traces.length
+      ? traces.slice(0, 20).map((t) => `<tr><td class="mono">${new Date(t.at).toLocaleTimeString("zh-CN")}</td>
+          <td class="mono">${esc(t.m || "")} ${esc(t.p || "")}</td>
+          <td class="mono" style="color:${(t.s || 0) >= 400 ? "var(--err)" : "var(--fg2)"}">${t.s ?? "—"}</td>
+          <td class="mono">${fmtMs(t.ms)}</td>
+          <td class="mono" style="color:var(--fg3)">${esc(t.t || "")}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="empty">没有慢请求</td></tr>`;
+  } catch (e) {
+    $("hd-banner").innerHTML = `<div class="flash err">体检载入失败：${esc(e.message)}</div>`;
+  }
+}
+$("hd-refresh").onclick = () => { homeLoaded.health = false; switchHome("health"); };
+
+// ---- 知识层 ----
+const KN_STATUS = { draft: "草稿", supported: "有支持", contested: "存疑", refuted: "被推翻", retired: "已废弃" };
+const KN_CONF = { high: "置信高", medium: "置信中", low: "置信低" };
+let knClaims = [];
+let knFilter = "all";
+
+async function loadKernelTab() {
+  try {
+    const d = await api("/api/_platform/kernel");
+    knClaims = d.claims || [];
+    const stats = d.stats || {};
+    const cnt = stats.counts || {};
+
+    $("kn-kpis").innerHTML = [
+      ["结论", knClaims.length, "var(--fg)"],
+      ["有支持", knClaims.filter((c) => c.status === "supported").length, "var(--ok)"],
+      ["草稿", knClaims.filter((c) => c.status === "draft").length, "var(--warn)"],
+      ["有警告", knClaims.filter((c) => c.warning).length, "var(--err)"],
+      ["证据", cnt.evidence || 0, "var(--ac)"],
+      ["实验", cnt.run || 0, "var(--ac)"],
+    ].map(([k, v, col]) => `<div class="kpi"><div class="v" style="color:${col}">${v}</div><div class="k">${k}</div></div>`).join("");
+
+    renderKnClaims();
+    renderKnEvents(d.events || []);
+    loadKbPanel();
+    loadSkillsPanel();
+  } catch (e) {
+    $("kn-claims").innerHTML = `<div class="flash err">知识层载入失败：${esc(e.message)}</div>`;
+  }
+}
+
+function renderKnClaims() {
+  let list = knClaims;
+  if (knFilter === "warn") list = list.filter((c) => !!c.warning);
+  else if (knFilter !== "all") list = list.filter((c) => c.status === knFilter);
+
+  $("kn-cnt").textContent = `${list.length} 条`;
+  if (!list.length) {
+    $("kn-claims").innerHTML = `<div class="empty">${knClaims.length ? "当前筛选下没有结论" : "还没有结论。去「研究」存报告，或去「实验器」跑一轮实验。"}</div>`;
+    return;
+  }
+
+  $("kn-claims").innerHTML = list.map((c) => {
+    const evHtml = (c.evidences || []).length
+      ? `<div class="chain">${c.evidences.map((e) => `
+          <div class="chain-item t${esc(e.tier)}">
+            <span class="chain-tier">${esc(e.tier)}</span>
+            <div class="chain-body">${esc(e.summary || e.kind)}
+              <div class="chain-ref">${esc(e.refLabel || e.refId)}
+                ${e.gated === true ? '<span class="gate-ok"> · 闸门✓</span>' : ""}
+                ${e.gated === false ? '<span class="gate-bad"> · 闸门✗</span>' : ""}
+                · 强度 ${e.strength}</div>
+            </div>
+          </div>`).join("")}</div>`
+      : `<div class="claim-meta">（无证据）</div>`;
+
+    const badgeCls = ["supported", "draft", "refuted"].includes(c.status) ? c.status : "other";
+    return `<div class="claim s-${esc(c.status)}">
+      <div class="claim-head">
+        <span class="claim-text">${esc(c.text)}</span>
+        <span class="badge b-${badgeCls}">${esc(KN_STATUS[c.status] || c.status)}</span>
+        <span class="badge b-other">${esc(KN_CONF[c.confidence] || c.confidence)}</span>
+      </div>
+      <div class="claim-meta">
+        <span>${esc(c.id)}</span>
+        <span>证据 ${c.evidenceCount ?? 0} 条</span>
+        ${Object.entries(c.byTier || {}).map(([k, v]) => `<span>${esc(k)}×${v}</span>`).join("")}
+        <span>${new Date(c.createdAt).toLocaleString("zh-CN")}</span>
+      </div>
+      ${c.warning ? `<div class="claim-warn">⚠️ ${esc(c.warning)}</div>` : ""}
+      ${evHtml}
+    </div>`;
+  }).join("");
+}
+
+$("kn-filters").onclick = (e) => {
+  const b = e.target.closest("[data-f]");
+  if (!b) return;
+  knFilter = b.dataset.f;
+  [...$("kn-filters").children].forEach((x) => x.classList.toggle("on", x === b));
+  renderKnClaims();
+};
+
+function renderKnEvents(evs) {
+  if (!evs.length) { $("kn-events").innerHTML = `<div class="empty">暂无记录</div>`; return; }
+  $("kn-events").innerHTML = evs.map((e) => {
+    const c = e.causedBy;
+    const cause = c
+      ? `<span style="color:var(--ac)">← ${esc(c.by || "?")}${c.reason ? " / " + esc(c.reason) : ""}${c.refId ? " · " + esc(String(c.refId).slice(0, 18)) : ""}</span>`
+      : `<span style="color:var(--fg3);opacity:.5">（无因果记录）</span>`;
+    return `<div class="ev"><span class="t">${new Date(e.at).toLocaleTimeString("zh-CN")}</span>
+      <span>${esc(e.action)} · ${esc(e.type || "")} ${esc((e.id || "").slice(0, 14))}</span>${cause}</div>`;
+  }).join("");
+}
+
+async function loadKbPanel() {
+  try {
+    const d = await api("/api/_platform/kb");
+    const st = d.stats || {};
+    $("kn-kb-stat").textContent = `${st.total ?? 0} 篇`;
+    const files = d.files || [];
+    $("kn-kb").innerHTML = files.length
+      ? files.map((f) => `<div class="kb-row" data-kb="${esc(f.rel)}">
+          <span class="dm">${esc(f.domainLabel || f.domain)}</span>
+          <span class="tt">${esc(f.title)}</span>
+          ${f.confidence ? `<span class="cf cf-${esc(f.confidence)}">${esc(f.confidence)}</span>` : ""}
+          <span class="mt">${new Date(f.modified).toLocaleDateString("zh-CN")} · ${(f.size / 1024).toFixed(1)}KB</span>
+        </div>`).join("") + `<div id="kn-kb-view" class="doc-view" hidden></div>`
+      : `<div class="empty">知识库还是空的。研究报告保存时会自动沉淀到这里。</div>`;
+  } catch (e) {
+    $("kn-kb").innerHTML = `<div class="empty">知识库载入失败：${esc(e.message)}</div>`;
+  }
+}
+
+$("kn-kb").onclick = async (e) => {
+  const row = e.target.closest("[data-kb]");
+  if (!row) return;
+  const view = $("kn-kb-view");
+  if (!view) return;
+  const rel = row.dataset.kb;
+  if (view.dataset.cur === rel && !view.hidden) { view.hidden = true; view.dataset.cur = ""; return; }
+  view.hidden = false; view.dataset.cur = rel;
+  view.innerHTML = `<span class="spin"></span> 载入中…`;
+  try {
+    const d = await api("/api/_platform/kb/read?path=" + encodeURIComponent(rel));
+    if (!d.ok) throw new Error(d.error || "读取失败");
+    view.innerHTML = Bench.kit.md(d.content);
+    view.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    view.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+};
+
+async function loadSkillsPanel() {
+  try {
+    const d = await api("/api/_platform/skills");
+    const list = d.skills || [];
+    $("kn-sk-stat").textContent = `${list.length} 个`;
+    $("kn-sk").innerHTML = list.length
+      ? list.map((s) => `<div class="kb-row" data-sk="${esc(s.id)}">
+          <span class="dm">${esc(s.id)}</span>
+          <span class="tt">${esc((s.description || "").split("。")[0] || s.name)}</span>
+          <span class="mt">${s.files} 文件</span>
+        </div>`).join("") + `<div id="kn-sk-view" class="doc-view" hidden></div>`
+      : `<div class="empty">没有找到技能。</div>`;
+  } catch (e) {
+    $("kn-sk").innerHTML = `<div class="empty">技能载入失败：${esc(e.message)}</div>`;
+  }
+}
+
+$("kn-sk").onclick = async (e) => {
+  const row = e.target.closest("[data-sk]");
+  if (!row) return;
+  const view = $("kn-sk-view");
+  if (!view) return;
+  const id = row.dataset.sk;
+  if (view.dataset.cur === id && !view.hidden) { view.hidden = true; view.dataset.cur = ""; return; }
+  view.hidden = false; view.dataset.cur = id;
+  view.innerHTML = `<span class="spin"></span> 载入中…`;
+  try {
+    const d = await api("/api/_platform/skills/read?name=" + encodeURIComponent(id));
+    if (!d.ok) throw new Error(d.error || "读取失败");
+    view.innerHTML = Bench.kit.md(d.content);
+    view.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    view.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+};
+
+$("kn-refresh").onclick = () => { homeLoaded.kernel = false; switchHome("kernel"); };
+
+// ===========================================================================
+// 启动
+// ===========================================================================
+// 顶栏按钮图标（HTML 里留空，JS 填充，避免 emoji 在不同平台渲染不一致）
+function paintChromeIcons() {
+  const map = {
+    "btn-design": "design",
+    "btn-home": "home",
+    "btn-manage": "manage",
+    "btn-reload": "reload",
+  };
+  for (const [id, name] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = icon(name, 16);
+  }
+  // 主题按钮的图标随明暗变化，由 applyTheme 负责
+}
+
+(async () => {
+  paintChromeIcons();
+  // 顺序很重要：先拿主题标识，再加载设计（设计 token 要按主题派生）
+  await loadTheme();
+  await Promise.all([loadDesign(), loadMode()]);
+  await loadApps();
+  fromHash();
+})();
+
+</script>
+</body>
+</html>

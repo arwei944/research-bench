@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>模式</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#12151d;--elev:#181c26;--line:#232936;--line2:#333c4d;
+        --fg:#e8ecf4;--fg2:#a2adc0;--fg3:#697586;--ac:#5b93f8;--ac2:#1e3559;--ok:#3ddc97}
+  [data-theme="light"]{--bg:#f6f7f9;--panel:#fff;--elev:#f0f2f5;--line:#e2e6ec;--line2:#c8cfda;
+        --fg:#161b22;--fg2:#4c5866;--fg3:#7b8794;--ac:#2563eb;--ac2:#dbeafe;--ok:#059669}
+  body{margin:0;padding:26px;font:14px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--fg)}
+  h1{font-size:18px;margin:0 0 6px}
+  .muted{color:var(--fg3);font-size:12.5px;line-height:1.7}
+  .seg{display:inline-flex;background:var(--elev);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;margin:16px 0}
+  .seg button{background:none;border:none;padding:6px 14px;border-radius:6px;font:inherit;
+              font-size:12.5px;color:var(--fg3);cursor:pointer}
+  .seg button.on{background:var(--panel);color:var(--fg);font-weight:600}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  @media(max-width:780px){.cols{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px}
+  .card h3{margin:0 0 4px;font-size:13px}
+  .card .d{font-size:11.5px;color:var(--fg3);margin-bottom:10px}
+  .b{border-left:2px solid var(--line2);padding:6px 0 6px 10px;margin-bottom:9px}
+  .b .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--fg3);font-weight:700}
+  .b .v{font-size:11.5px;color:var(--fg2);font-family:ui-monospace,Consolas,monospace;
+        white-space:pre-wrap;line-height:1.65}
+  .card.nov .b{border-left-color:var(--ok)}
+  .card.exp .b{border-left-color:var(--ac)}
+  code{background:var(--elev);padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
+  pre{background:var(--elev);border:1px solid var(--line);border-radius:8px;padding:11px;
+      overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.65}
+</style></head>
+<body>
+  <h1>◉ 模式模块</h1>
+  <p class="muted">
+    这一层的能力：<b>同一份内容，按使用者水平决定解释深度与参数可见性</b>。
+    它是被 research / learn 共享的，坏了两边都会降级。
+  </p>
+
+  <div class="seg" id="seg">
+    <button data-m="novice">小白模式</button>
+    <button data-m="expert">专家模式</button>
+  </div>
+
+  <div class="cols">
+    <div class="card nov"><h3>🌱 小白模式</h3><div class="d">术语带解释 · 出错给怎么修 · 高级参数藏起来</div><div id="nov"></div></div>
+    <div class="card exp"><h3>⚡ 专家模式</h3><div class="d">只给术语 · 完整堆栈 · 全部参数与默认值</div><div id="exp"></div></div>
+  </div>
+
+  <h2 style="font-size:13px;margin:26px 0 8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em">应用里怎么用</h2>
+  <p class="muted">只需两条 CSS + 标记类名。平台会把模式写进 <code>&lt;html data-mode&gt;</code>。</p>
+  <pre>[data-mode="expert"] .novice-only { display: none !important; }
+[data-mode="novice"] .expert-only { display: none !important; }
+
+&lt;div class="novice-only"&gt;检索会查 5 个网站，结果都是真实抓的&lt;/div&gt;
+&lt;div class="expert-only"&gt;GET arXiv/OpenAlex · 相关性过滤(A≥0.4)&lt;/div&gt;</pre>
+
+  <p class="muted" style="margin-top:18px">
+    实时预览接口：<code>GET /api/_platform/mode/preview?sample=lambda</code><br>
+    状态文件：<code>bench/data/mode.json</code>（含 <code>perApp</code> 覆盖）
+  </p>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+async function load() {
+  const [prev, cur] = await Promise.all([
+    fetch("/api/_platform/mode/preview?sample=lambda").then(r => r.json()),
+    fetch("/api/_platform/mode").then(r => r.json()),
+  ]);
+  const mk = (side) => prev[side].blocks.map(b =>
+    `<div class="b"><div class="k">${esc(b.k)}</div><div class="v">${esc(b.v)}</div></div>`).join("");
+  $("nov").innerHTML = mk("novice");
+  $("exp").innerHTML = mk("expert");
+  document.querySelectorAll("#seg button").forEach(b =>
+    b.classList.toggle("on", b.dataset.m === cur.mode));
+  document.documentElement.dataset.mode = cur.mode;
+}
+
+$("seg").onclick = async (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  await fetch("/api/_platform/mode", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode: b.dataset.m }),
+  });
+  document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("on", x === b));
+  document.documentElement.dataset.mode = b.dataset.m;
+};
+
+// 跟随平台主题
+window.addEventListener("message", (e) => {
+  if (e.data?.type === "bench:theme" && e.data.mode) document.documentElement.dataset.theme = e.data.mode;
+  if (e.data?.type === "bench:theme" && e.data.vars) {
+    const r = document.documentElement.style;
+    for (const [k, v] of Object.entries(e.data.vars)) r.setProperty(k, v);
+  }
+});
+try { window.parent?.postMessage({ type: "bench:ready" }, "*"); } catch {}
+load();
+</script>
+<script src="/static/kit.js"></script>
+<script>
+// 设计/主题/模式同步 —— 统一交给 kit，不再各自实现
+// （原来每个应用都手写一遍 postMessage 监听，既重复又漏了设计感知）
+(function () {
+  function ready() {
+    if (!window.Bench || !window.Bench.kit) return;
+    Bench.kit.theme.sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+  else ready();
+})();
+</script>
+</body></html>

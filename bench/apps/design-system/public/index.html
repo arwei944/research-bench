@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>设计系统</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#12151d;--elev:#181c26;--line:#232936;--line2:#333c4d;
+        --fg:#e8ecf4;--fg2:#a2adc0;--fg3:#697586;--ac:#5b93f8}
+  [data-theme="light"]{--bg:#f6f7f9;--panel:#fff;--elev:#f0f2f5;--line:#e2e6ec;--line2:#c8cfda;
+        --fg:#161b22;--fg2:#4c5866;--fg3:#7b8794;--ac:#2563eb}
+  body{margin:0;padding:26px;font:14px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--fg)}
+  h1{font-size:18px;margin:0 0 6px}
+  .muted{color:var(--fg3);font-size:12.5px;line-height:1.7}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px;margin-top:16px}
+  .d{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px}
+  .d.on{border-color:var(--ac);box-shadow:0 0 0 2px color-mix(in srgb,var(--ac) 26%,transparent)}
+  .d .t{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .d .nm{font-weight:700;font-size:13.5px}
+  .d .ref{font-size:11px;color:var(--fg3);line-height:1.6;margin-bottom:8px}
+  .d .ref b{color:var(--fg2)}
+  .sw{display:flex;gap:3px;margin-bottom:9px}
+  .sw i{width:100%;height:20px;border-radius:3px;display:block;border:1px solid rgba(255,255,255,.07)}
+  .meta{font-size:10px;font-family:ui-monospace,Consolas,monospace;color:var(--fg3);
+        display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+  button{background:var(--ac);color:#fff;border:none;border-radius:7px;padding:5px 12px;
+         font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;width:100%}
+  button:disabled{opacity:.45;cursor:default}
+  code{background:var(--elev);padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
+  pre{background:var(--elev);border:1px solid var(--line);border-radius:8px;padding:11px;
+      overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.65}
+</style></head>
+<body>
+  <h1>◉ 设计系统</h1>
+  <p class="muted">
+    10 款外壳设计，每款是一组 <b>token</b>（颜色/圆角/字体/间距/头部高度）。
+    外壳 CSS 全部读 <code>var(--d-*)</code>，所以换设计只写变量，不动任何前端代码。
+    <br>这一层被整个外壳共享，改坏了所有应用的外观都会异常。
+  </p>
+
+  <div class="grid" id="grid"></div>
+
+  <h2 style="font-size:13px;margin:26px 0 8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em">新增一款设计</h2>
+  <p class="muted">往 <code>bench/lib/designs.mjs</code> 的 <code>DESIGNS</code> 数组加一个对象即可，不改前端。</p>
+  <pre>{
+  id: "my-style",
+  name: "我的风格",
+  ref: "参考了哪个产品",
+  borrow: "借鉴什么",
+  avoid: "刻意不借鉴什么",
+  layout: "sidebar-left | sidebar-narrow | top-tabs | command | centered | dashboard | split | rail",
+  density: "low | mid | high",
+  tokens: { theme:"dark", bg:"#...", panel:"#...", ac:"#...", radius:"8px", ... }
+}</pre>
+
+<script>
+const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+let list = [], current = null;
+
+function render() {
+  document.getElementById("grid").innerHTML = list.map(d => {
+    const t = d.tokens;
+    const on = d.id === current;
+    return `<div class="d ${on ? "on" : ""}">
+      <div class="t"><span class="nm">${esc(d.name)}</span></div>
+      <div class="ref"><b>借鉴</b> ${esc(d.ref)} — ${esc(d.borrow)}<br><b>不借鉴</b> ${esc(d.avoid)}</div>
+      <div class="sw">
+        <i style="background:${t.bg}"></i><i style="background:${t.panel}"></i>
+        <i style="background:${t.ac}"></i><i style="background:${t.fg}"></i>
+      </div>
+      <div class="meta"><span>${esc(d.layout)}</span><span>${esc(d.density)}</span><span>r=${esc(t.radius)}</span></div>
+      <button data-a="${d.id}" ${on ? "disabled" : ""}>${on ? "当前" : "应用"}</button>
+    </div>`;
+  }).join("");
+  document.getElementById("grid").querySelectorAll("[data-a]").forEach(b => {
+    b.onclick = async () => {
+      await fetch("/api/_platform/design", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: b.dataset.a }),
+      });
+      current = b.dataset.a;
+      render();
+      try { window.parent?.postMessage({ type: "bench:design", id: current }, "*"); } catch {}
+    };
+  });
+}
+
+(async () => {
+  const d = await fetch("/api/_platform/designs").then(r => r.json());
+  list = d.designs; current = d.current;
+  render();
+})();
+
+window.addEventListener("message", (e) => {
+  if (e.data?.type === "bench:theme" && e.data.mode) document.documentElement.dataset.theme = e.data.mode;
+  if (e.data?.type === "bench:theme" && e.data.vars) {
+    const r = document.documentElement.style;
+    for (const [k, v] of Object.entries(e.data.vars)) r.setProperty(k, v);
+  }
+});
+try { window.parent?.postMessage({ type: "bench:ready" }, "*"); } catch {}
+</script>
+<script src="/static/kit.js"></script>
+<script>
+// 设计/主题/模式同步 —— 统一交给 kit，不再各自实现
+// （原来每个应用都手写一遍 postMessage 监听，既重复又漏了设计感知）
+(function () {
+  function ready() {
+    if (!window.Bench || !window.Bench.kit) return;
+    Bench.kit.theme.sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+  else ready();
+})();
+</script>
+</body></html>

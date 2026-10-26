@@ -1,0 +1,43 @@
+{
+  "id": "nb-day1",
+  "title": "第 1 天 · 只有替换",
+  "note": "目标：亲手确认「应用」是唯一动词。做完这 5 格，你应该能不看资料写出 I、K、S。",
+  "cells": [
+    {
+      "lang": "lambda",
+      "title": "① 最小的一步",
+      "code": "(\\x.x) y",
+      "comment": "这是 β 归约最简单的情形。观察：λ 和它绑定的变量一起消失了。"
+    },
+    {
+      "lang": "lambda",
+      "title": "② 两个参数",
+      "code": "K a b",
+      "comment": "K = λx.λy.x。注意它「丢弃了第二个参数」——这说明参数不必被使用，函数不是数据映射，是替换规则。"
+    },
+    {
+      "lang": "lambda",
+      "title": "③ 捕获陷阱",
+      "code": "(\\x.\\y.x) y z",
+      "comment": "结果是不是你想的那样？如果直接替换会得到 λy.y z，语义全错。解释器内部做了 α 重命名。改成 trace 模式看每一步。"
+    },
+    {
+      "lang": "lambda",
+      "title": "④ 用 S 和 K 造恒等",
+      "code": "S K K a",
+      "comment": "S K K 就是 I。全程没有 lambda、没有变量绑定——只有两个组合子和应用。"
+    },
+    {
+      "lang": "lambda",
+      "title": "⑤ 没有数字也能做加法",
+      "code": "PLUS 2 3",
+      "comment": "返回 λf x. f(f(f(f(f x))))，被识别为 Church 数 5。数字是「重复次数」。"
+    },
+    {
+      "lang": "js",
+      "title": "⑥ 用 JS 复现 Church 编码",
+      "code": "const c0 = f => x => x;\nconst c1 = f => x => f(x);\nconst c3 = f => x => f(f(f(x)));\nconst plus = m => n => f => x => m(f)(n(f)(x));\n\nconst toInt = n => n(x => x + 1)(0);\ntoInt(plus(c1)(c3))",
+      "comment": "同一个想法用另一种语言写。你会看到「数据」完全消失，只剩函数。"
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "title": "从代码的最小构成元素出发：计算、类型与效果",
+  "updated": "2026-10-24",
+  "tracks": [
+    {
+      "id": "T1",
+      "name": "第一轨 · 执行模型",
+      "question": "计算的本质到底是什么？",
+      "color": "#4f8ef7"
+    },
+    {
+      "id": "T2",
+      "name": "第二轨 · 结构",
+      "question": "数据形状与分解为什么比 if/while 更本质？",
+      "color": "#34d399"
+    },
+    {
+      "id": "T3",
+      "name": "第三轨 · 意义",
+      "question": "类型与命题为什么是同一件事？",
+      "color": "#fbbf24"
+    },
+    {
+      "id": "T4",
+      "name": "第四轨 · 效果的代价",
+      "question": "副作用如何摧毁又重建了计算模型？",
+      "color": "#f472b6"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "n-lambda",
+      "track": "T1",
+      "label": "λ 演算",
+      "question": "只有「定义函数」和「调用函数」，够不够算一切？",
+      "core": "λ 演算只有三个语法成分：变量、抽象（λx.M）、应用（M N）。加上一条 β 归约规则 (λx.M) N → M[x:=N]，就是图灵完备的计算模型。Church 1936 已证与图灵机等价。",
+      "why": "它把「计算」这件事压缩到只剩一个动词：**替换**。理解它之后，所有语言特性都变成语法糖，你会开始问「这个特性本质上是哪种替换」。",
+      "misconception": "误以为 λ 是「函数」的意思。其实 λ 只是「我要绑定一个名字」的记号，和数学里的函数关系不大——λ 演算的函数是「等式的左边」，没有返回值概念。",
+      "lab": "I = \\x.x\nK = \\x.\\y.x\nS = \\x.\\y.\\z.x z (y z)\nS K K a        -- 用 S K 造出 I",
+      "depends": []
+    },
+    {
+      "id": "n-beta",
+      "track": "T1",
+      "label": "β 归约与变量捕获",
+      "question": "替换为什么不能直接做？",
+      "core": "直接替换会导致**变量捕获**：(λx.λy.x) y 若直接代入得到 λy.y，语义全错。必须先对 y 做 α 重命名（换成 y$1），再代入。",
+      "why": "这是「作用域」这个概念存在的唯一理由。所有语言的「变量可见性规则」都是在防这件事。",
+      "misconception": "误以为变量名是本质。其实变量名只是给人看的，真正的是「绑定关系」。de Bruijn 索引就是把名字彻底去掉、只留绑定层级的记法。",
+      "lab": "(\\x.\\y.x) y z\n-- 看结果：是 z 还是 y？\n-- 再试 (\\x.\\y.x) y    看 print 出来的名字",
+      "depends": ["n-lambda"]
+    },
+    {
+      "id": "n-strategy",
+      "track": "T1",
+      "label": "求值策略与停机",
+      "question": "为什么有些表达式永远算不完？",
+      "core": "Ω = (λx.x x)(λx.x x) 一步之后还是自己，没有范式。**正规序**（最左最外）保证「若范式存在则必求得」；**应用序**（call-by-value）可能不终止。",
+      "why": "这解释了惰性求值为什么不是「优化」而是「语义选择」。也解释了为什么 `if` 在惰性语言里必须特殊处理。",
+      "misconception": "误以为「循环」是语言的 bug。其实不终止是 λ 演算的内在性质（停机问题），任何图灵完备系统都有。",
+      "lab": "OMEGA\n-- 单步看它自己\n(\\x.y) OMEGA      -- 正规序：直接得 y\n-- 对比：应用序会先算 OMEGA，永远算不出",
+      "depends": ["n-beta"]
+    },
+    {
+      "id": "n-sk",
+      "track": "T1",
+      "label": "SK 组合子",
+      "question": "如果连 λ 和变量都不需要呢？",
+      "core": "只有两个组合子 S、K 加上应用，就能表达所有可计算函数：K x y = x，S x y z = x z (y z)。组合逻辑由 Schönfinkel 1924 提出、Curry 系统化。",
+      "why": "这证明「变量绑定」不是本质，是方便。它是「无点风格」（point-free）的理论基础，也是函数式编译器的中间表示。",
+      "misconception": "误以为这只是理论玩具。实际上 SK 是「图归约」实现的基础，Haskell 的某些优化就用到超组合子思想。",
+      "lab": "S K K a        -- = I a = a\nK (S K K) b    -- 变体\n-- 挑战：只用 S、K、应用写 \\x.\\y.y",
+      "depends": ["n-lambda"]
+    },
+    {
+      "id": "n-church",
+      "track": "T1",
+      "label": "Church 编码",
+      "question": "没有数字，怎么表示 3？",
+      "core": "3 = λf.λx.f(f(f x))：数字是「把某操作重复 n 次」。布尔同理：TRUE=λt.λf.t，FALSE=λt.λf.f。**数据即行为**。",
+      "why": "这是「编码」这一概念的原型。你一旦理解它，就会明白为什么 JSON、protobuf、甚至 GPU 纹理格式都是在做同一件事：选一套能表达一切的原语。",
+      "misconception": "误以为这只是炫技。其实 Church 编码揭示了「数据」和「控制」可以互相翻译——这是 CPS 变换、去函数化（defunctionalization）的原理。",
+      "lab": "PLUS 2 3           -- = 5\nMULT 3 4           -- = 12\nISZERO 0\nISZERO 5\nPRED 3             -- 减法很难，看它多复杂",
+      "depends": ["n-lambda"]
+    },
+    {
+      "id": "n-y",
+      "track": "T1",
+      "label": "不动点与递归",
+      "question": "λ 里没有「自己调用自己」，怎么办？",
+      "core": "Y f = f (Y f)。Y 组合子让「匿名函数」也能递归。它是 λ 演算里实现循环的唯一办法，也是「递归=不动点」这一深刻联系的来源。",
+      "why": "这解释了为什么递归函数可以写成「不含名字的函数」。也解释了「循环」和「递归」在本质上是同一件事。",
+      "misconception": "误以为 Y 就是「一种递归技巧」。其实它对应**不动点定理**（Knaster–Tarski / Kleene），是数学上「自指」的一般形式。",
+      "lab": "Y (\\f.\\n.ISZERO n 0 (PLUS n (f (PRED n)))) 3\n-- 用 Y 写阶乘\n-- 注意：正规序下 Y 也能工作，应用序需要 Z",
+      "depends": ["n-church", "n-strategy"]
+    },
+    {
+      "id": "n-adt",
+      "track": "T2",
+      "label": "构造 + 匹配",
+      "question": "为什么 match 比 if 更本质？",
+      "core": "归纳类型的两个基本操作：**构造**（造数据）和**消去**（拆数据）。if 只是「布尔类型的 match」，while 只是「自然数/列表的递归」。有了 match，控制流全部变成数据形状的分支。",
+      "why": "这直接决定建模能力。用 if 思考只能处理扁平条件；用 match 思考能看到数据形状的所有可能，**编译器还能检查你漏了哪种**。",
+      "misconception": "误以为 match 是「更强大的 if」。方向反了：if 是退化版的 match。`bool = true | false`，if 只是对二元和类型做 match 的语法糖。",
+      "lab": "// JS 里手写 Church 编码的布尔\nconst TRUE = t => f => t;\nconst FALSE = t => f => f;\nconst IF = c => t => f => c(t)(f);\nIF(TRUE)(\"yes\")(\"no\")\n\n// 再看「和类型」怎么用函数编码\nconst pair = a => b => f => f(a)(b);\nconst fst = p => p(TRUE);\nconst snd = p => p(FALSE);\nsnd(pair(1)(2))",
+      "depends": []
+    },
+    {
+      "id": "n-recursion-scheme",
+      "track": "T2",
+      "label": "递归与 fold",
+      "question": "所有的循环其实是同一个东西吗？",
+      "core": "对列表的 fold（catamorphism）能表达**一切**对列表的遍历。map、filter、sum、length 都是 fold 的特例。同理树的 fold 能表达一切树遍历。",
+      "why": "理解它之后，你看到 for 循环会先问「遍历的是哪种数据结构」。也解释了为什么递归方案（recursion schemes）能把「遍历」和「业务逻辑」彻底分开。",
+      "misconception": "误以为 fold 只是「求和」。其实 fold 是**归纳类型的通用消去规则**——它是「拆掉一个数据结构」的唯一本质方式。",
+      "lab": "// 只用 fold 实现 map / filter / length\nconst fold = xs => init => f => xs.reduce(f, init);\nconst map = xs => g => fold(xs)([])((acc, x) => [...acc, g(x)]);\nconst filter = xs => p => fold(xs)([])((acc, x) => p(x) ? [...acc, x] : acc);\nmap([1,2,3])(x => x*2)\nfilter([1,2,3,4])(x => x%2===0)",
+      "depends": ["n-adt"]
+    },
+    {
+      "id": "n-total",
+      "track": "T2",
+      "label": "全序与比较器",
+      "question": "为什么自定义排序会崩？",
+      "core": "`sort` 的正确性依赖比较器满足**全序**：自反、反对称、传递、完全（任意两元素可比）。违反任何一条，排序行为未定义。",
+      "why": "这是「规格（spec）决定实现正确性」最日常的例子。你写的比较器不是「顺便被调用的小函数」，它是在定义数学结构。",
+      "misconception": "误以为比较器只要「大致能排」。实际上 `Array.sort` 在不同引擎下对不合格比较器有不同表现（有的静默错乱，有的抛错），这是最难查的 bug 类型。",
+      "lab": "// 一个违反传递性的比较器：石头剪刀布\nconst rps = (a,b) => a===b?0 : (a==='rock'&&b==='scissors')||(a==='scissors'&&b==='paper')||(a==='paper'&&b==='rock') ? -1 : 1;\n['rock','paper','scissors'].sort(rps)\n['paper','scissors','rock'].sort(rps)\n// 不同顺序输入 → 结果不同 → 说明不是全序",
+      "depends": []
+    },
+    {
+      "id": "n-curry-howard",
+      "track": "T3",
+      "label": "Curry–Howard 同构",
+      "question": "类型和命题为什么是同一件事？",
+      "core": "类型 ↔ 命题，程序 ↔ 证明：`A → B` 对应「A 蕴含 B」，`A × B` 对应「A 且 B」，`A + B` 对应「A 或 B」，`Never` 对应「假」。构造一个类型的值 = 证明该命题成立。",
+      "why": "这是理解类型系统的最高杠杆。它会让你把「写类型」看成「写规格」，把「类型检查通过」看成「证明完成」。",
+      "misconception": "误以为这只是巧合或类比。它是**精确的同构**（有函子、自然变换层面的对应），并且是 Coq/Lean/Agda 这些证明助手的理论基础。",
+      "lab": "// 命题 A∧B 的「证明」= 同时给出 A 和 B\nconst andIntro = a => b => [a, b];\n// 命题 A→A 的「证明」= 恒等函数\nconst impliesRefl = x => x;\n// Never 类型：无法构造值 → 对应「假」\n// 看这个类型的函数为什么不可能存在：\n// (A → B) → A   ← 这在直觉逻辑里不可证",
+      "depends": ["n-adt"]
+    },
+    {
+      "id": "n-effects",
+      "track": "T4",
+      "label": "副作用的三种模型",
+      "question": "纯函数怎么打印东西？",
+      "core": "三种建模方式：① **单子**（IO a 是「会产生 a 的动作」的值）② **代数效应**（effect handlers，可插拔）③ **线性/唯一性类型**（把世界当作被消耗的参数）。",
+      "why": "这决定了你理解并发、事务、测试、依赖注入的方式。一旦理解「效果是值」，注入 mock 就变成「换 handler」，而不是「打补丁」。",
+      "misconception": "误以为 Haskell 的 IO 是「把副作用藏起来」。相反：它是把副作用**显式化**，让类型系统知道你哪些函数是不纯的。",
+      "lab": "// 用简单的方式模拟「效果是值」\nconst ReadFile = path => ({ tag: 'ReadFile', path });\nconst Pure = v => ({ tag: 'Pure', v });\nconst Bind = (m, f) => ({ tag: 'Bind', m, f });\n\n// 解释器（换它 = 换 mock）\nconst runIO = prog => {\n  const go = p => {\n    if (p.tag === 'Pure') return p.v;\n    if (p.tag === 'ReadFile') return `[file:${p.path}]`;\n    if (p.tag === 'Bind') return go(p.f(go(p.m)));\n  };\n  return go(prog);\n};\nrunIO(Bind(ReadFile('a.txt'), c => Pure('got ' + c)))",
+      "depends": ["n-lambda"]
+    },
+    {
+      "id": "n-monad-laws",
+      "track": "T4",
+      "label": "单子三定律",
+      "question": "为什么重构会改变行为？",
+      "core": "左单位 `return a >>= f ≡ f a`、右单位 `m >>= return ≡ m`、结合律 `(m >>= f) >>= g ≡ m >>= (λx. f x >>= g)`。三条都是**等式**，所以可以安全替换。",
+      "why": "这是「重构安全」的数学基础。没有这三条，把 `x = f(); y = g(x)` 改成 `y = f().then(g)` 就可能改变行为。",
+      "misconception": "误以为定律只是「风格建议」。违反结合律的单子（比如某些「隐式状态」实现）会导致代码拆分/合并后结果不同，是最隐蔽的 bug。",
+      "lab": "// 检查 Promise 是否满足结合律（它是单子，但 then 有微妙的时序）\nconst m = Promise.resolve(1);\nconst f = x => Promise.resolve(x + 1);\nconst g = x => Promise.resolve(x * 2);\n\nPromise.all([\n  m.then(f).then(g),\n  m.then(x => f(x).then(g))\n]).then(([a,b]) => `${a} === ${b} ? ${a===b}`)",
+      "depends": ["n-effects"]
+    },
+    {
+      "id": "n-orthogonality",
+      "track": "T4",
+      "label": "正交性与复杂度预算",
+      "question": "为什么功能要「正交」？",
+      "core": "正交 = 特性的效果可以**分别预测再叠加**。n 个正交特性有 n 种效果；n 个交叉特性有 2^n 种。这是「设计复杂度预算」的量化依据。",
+      "why": "它解释了为什么「配置项爆炸」是设计失败而不是需求多。也给出了判断标准：一个新特性如果让已有 n 个特性的行为都变，它就不是正交的。",
+      "misconception": "误以为正交就是「解耦」。正交更强：它要求「组合后的行为可预测」，而不仅仅是「互不依赖」。",
+      "lab": "// 正交：可以自由组合\nconst withCache = f => (...a) => f(...a);\nconst withLog = f => (...a) => { console.log(a); return f(...a); };\n// 非正交：行为取决于组合顺序\nconst withRetry = (f, n) => (...a) => { for(let i=0;i<n;i++) try { return f(...a) } catch(e){ if(i===n-1) throw e } };\n// 试试：withRetry(withCache(f)) vs withCache(withRetry(f))",
+      "depends": ["n-effects"]
+    }
+  ],
+  "edges": [
+    { "from": "n-lambda", "to": "n-beta", "label": "定义之后第一件事：怎么替换" },
+    { "from": "n-beta", "to": "n-strategy", "label": "替换顺序决定能否终止" },
+    { "from": "n-lambda", "to": "n-sk", "label": "去掉 λ 和变量" },
+    { "from": "n-lambda", "to": "n-church", "label": "没有数据，用行为编码" },
+    { "from": "n-church", "to": "n-y", "label": "有了数就能写循环，但缺自指" },
+    { "from": "n-strategy", "to": "n-y", "label": "正规序让 Y 可用" },
+    { "from": "n-adt", "to": "n-recursion-scheme", "label": "有了形状就有通用消去" },
+    { "from": "n-adt", "to": "n-curry-howard", "label": "积/和类型 ↔ 且/或命题" },
+    { "from": "n-lambda", "to": "n-effects", "label": "纯模型装不下 I/O" },
+    { "from": "n-effects", "to": "n-monad-laws", "label": "效果要能安全组合" },
+    { "from": "n-effects", "to": "n-orthogonality", "label": "效果多了就要管复杂度" },
+    { "from": "n-church", "to": "n-adt", "label": "编码数据 = 说清形状" },
+    { "from": "n-sk", "to": "n-curry-howard", "label": "组合子 ↔ 希尔伯特式证明" }
+  ]
+}

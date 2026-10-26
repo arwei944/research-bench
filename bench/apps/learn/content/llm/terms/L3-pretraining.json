@@ -1,0 +1,273 @@
+{
+  "layer": "L3",
+  "terms": [
+    {
+      "id": "t-pretraining",
+      "cn": "预训练",
+      "en": "pretraining",
+      "def": "在海量无标注语料上做下一个 token 预测，得到基础模型（base model）。",
+      "why": "模型 99% 的能力与 100% 的知识都来自这一步。后训练只改变「怎么说话」，不改变「知道什么」。",
+      "depends": [
+        "t-ntp"
+      ],
+      "contrasts": [
+        "t-post-training"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果只做后训练、跳过预训练，能得到一个可用的模型吗？",
+          "expect": "不能。预训练提供了语言能力与世界知识这个「底座」；后训练是在底座上调整行为，没有底座就没有可调整的东西"
+        },
+        {
+          "kind": "application",
+          "q": "为什么预训练要花几千万美元，而后训练只要几十万？",
+          "expect": "预训练要处理万亿级 token、动用上万卡跑数周；后训练数据量小几个数量级（十万级样本），且只需少量迭代"
+        }
+      ]
+    },
+    {
+      "id": "t-ntp",
+      "cn": "下一词元预测",
+      "en": "next-token prediction / NTP",
+      "def": "给定前文，预测下一个 token 的概率分布。这是 LLM 唯一的核心训练目标。",
+      "why": "它是「为什么 LLM 能学到世界知识」的理论支点：要准确预测文本，必须隐式建模生成文本的世界规律。",
+      "depends": [
+        "t-token",
+        "t-cross-entropy"
+      ],
+      "contrasts": [
+        "t-autoregressive"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "为什么「预测下一个 token」这么简单的目标能产生推理能力？",
+          "expect": "文本由世界状态生成；要最小化预测误差，最优解需对世界状态做边缘化，即隐式表示世界规律。这是数学上的必要条件，但不保证训练出的模型真的逼近最优解"
+        },
+        {
+          "kind": "contrast",
+          "q": "NTP 训练和自回归生成是同一件事吗？",
+          "expect": "不是。NTP 是训练目标（一次前向可并行算所有位置的损失，因为已知答案）；自回归是推理时的串行生成过程"
+        }
+      ]
+    },
+    {
+      "id": "t-cross-entropy",
+      "cn": "交叉熵损失",
+      "en": "cross-entropy loss",
+      "def": "−Σ y·log(p)，衡量预测分布与真实 one-hot 分布的差距。",
+      "why": "它是唯一的训练信号。所有「loss 曲线」「训练不稳定」的讨论都以它为语言。",
+      "depends": [],
+      "contrasts": [
+        "t-perplexity"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么交叉熵损失降不下去时，先怀疑数据而不是模型结构？",
+          "expect": "交叉熵下界由数据本身的不可约熵决定；若数据有标注噪声、重复、矛盾，loss 会被这些「无法预测」的部分卡住。模型容量通常不是首个瓶颈"
+        }
+      ]
+    },
+    {
+      "id": "t-perplexity",
+      "cn": "困惑度",
+      "en": "perplexity (PPL)",
+      "def": "交叉熵的指数形式：PPL = exp(loss)。可理解为「平均在多少个候选里犹豫」。",
+      "why": "它是跨模型比较训练质量的通用指标。但**PPL 低 ≠ 好用**，因为它只衡量「像不像训练数据」。",
+      "depends": [
+        "t-cross-entropy"
+      ],
+      "contrasts": [
+        "t-benchmark"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "一个模型 PPL 很低，但用户觉得它答得很差，这矛盾吗？",
+          "expect": "不矛盾。PPL 衡量对文本分布的拟合，不衡量指令遵循、正确性、有用性；过度拟合常见文本反而可能让回答更平庸"
+        },
+        {
+          "kind": "application",
+          "q": "为什么不同分词器的 PPL 不能直接比较？",
+          "expect": "PPL 是按 token 计算的；分词粒度不同则 token 数不同，分母不同。应换算成 per-character 或 per-byte 再比"
+        }
+      ]
+    },
+    {
+      "id": "t-learning-rate",
+      "cn": "学习率",
+      "en": "learning rate",
+      "def": "每次参数更新走的步长。",
+      "why": "它是训练中最重要的超参。太大发散、太小浪费算力，且最优值随批大小变化。",
+      "depends": [
+        "t-pretraining"
+      ],
+      "contrasts": [
+        "t-lr-schedule"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么把批大小翻倍后，通常要把学习率也调大？",
+          "expect": "批更大时梯度估计噪声更小，可以用更大步长而不发散；这是线性缩放规则的经验依据，但有上限"
+        }
+      ]
+    },
+    {
+      "id": "t-lr-schedule",
+      "cn": "学习率调度",
+      "en": "LR schedule",
+      "def": "训练过程中按预定曲线改变学习率，典型是 warmup + 余弦衰减。",
+      "why": "warmup 防止早期梯度爆炸，衰减让后期精细收敛。没有它，大模型训练几乎必炸。",
+      "depends": [
+        "t-learning-rate"
+      ],
+      "contrasts": [
+        "t-pre-ln"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "为什么训练开头要用很小的学习率慢慢升上去（warmup），而不是一开始就用目标值？",
+          "expect": "训练初期参数随机、激活与梯度尺度不稳定，大步长会直接破坏权重；warmup 给模型时间进入稳定区域。Post-LN 尤其敏感"
+        }
+      ]
+    },
+    {
+      "id": "t-batch-size",
+      "cn": "批大小",
+      "en": "batch size",
+      "def": "一次参数更新所用的样本（或 token）数量。",
+      "why": "它决定了梯度噪声与吞吐。大模型训练里常用「token 数」而非「序列数」来定义批大小。",
+      "depends": [
+        "t-learning-rate"
+      ],
+      "contrasts": [
+        "t-gradient-accum"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么论文里常写「batch size 4M tokens」而不是「batch size 512」？",
+          "expect": "序列长度可变，按序列数计无法反映实际计算量；按 token 数计才是稳定可比的口径"
+        }
+      ]
+    },
+    {
+      "id": "t-gradient-accum",
+      "cn": "梯度累积",
+      "en": "gradient accumulation",
+      "def": "把一个大 batch 拆成多个小 batch 依次前向反传，累积梯度后再更新一次。",
+      "why": "它让你在显存有限时模拟大 batch。是「单卡也能训大模型」的关键工程手段。",
+      "depends": [
+        "t-batch-size"
+      ],
+      "contrasts": [
+        "t-mixed-precision"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "梯度累积 8 步，与直接用 8 倍大的 batch 相比，效果等价吗？",
+          "expect": "数学上近似等价（梯度求和），但 BatchNorm 类依赖批统计的层不等价；且显存峰值、学习率缩放需相应调整"
+        }
+      ]
+    },
+    {
+      "id": "t-mixed-precision",
+      "cn": "混合精度",
+      "en": "mixed precision",
+      "def": "用 bf16/fp16 做前向与反传，用 fp32 保存主权重与累加。",
+      "why": "它把显存和带宽需求几乎减半，是大模型训练的标准配置。bf16 因为动态范围大而更常用。",
+      "depends": [
+        "t-float-precision"
+      ],
+      "contrasts": [
+        "t-quantization"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "训练为什么偏好 bf16 而不是 fp16？",
+          "expect": "bf16 指数位与 fp32 相同（动态范围大），不需要 loss scaling 就不会下溢；fp16 尾数精度高但范围窄，梯度小容易变 0"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "如果全程只用 fp16 训练（不用 fp32 主权重），会发生什么？",
+          "expect": "小梯度更新会被舍入到 0（下溢），参数无法累积微小变化，训练停滞或发散；需要 loss scaling 或保留 fp32 主权重"
+        }
+      ]
+    },
+    {
+      "id": "t-scaling-law",
+      "cn": "缩放定律",
+      "en": "scaling law",
+      "def": "损失随参数量、数据量、算力呈幂律下降，在小规模上拟合后可外推。",
+      "why": "它是「为什么要堆规模」的定量依据，也是「什么时候该加数据而不是加参数」的决策工具。",
+      "depends": [
+        "t-pretraining",
+        "t-param-count"
+      ],
+      "contrasts": [
+        "t-chinchilla"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "缩放定律能预测什么，不能预测什么？",
+          "expect": "能预测「损失」随规模的平滑下降；不能预测具体能力（如某 benchmark 分数）的涌现时机，也不能预测后训练与对齐的效果"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "如果缩放定律成立，为什么还会出现「损失下降但能力不涨」？",
+          "expect": "损失是平均指标，能力是特定任务上的表现；平均损失改善可能来自高频简单模式，与目标能力不直接对应"
+        }
+      ]
+    },
+    {
+      "id": "t-compute-optimal",
+      "cn": "计算最优",
+      "en": "compute-optimal",
+      "def": "在固定算力预算下，如何分配参数与数据使损失最小。",
+      "why": "它是「钱该花在哪」的定量答案。也是 Chinchilla 修正 Kaplan 的那个问题的名字。",
+      "depends": [
+        "t-scaling-law"
+      ],
+      "contrasts": [
+        "t-chinchilla"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "给定固定算力，是训练一个 70B 模型用 1T token，还是 7B 模型用 10T token？",
+          "expect": "按 Chinchilla 比例（约 20 token/参数），70B 配 1.4T 更接近最优；但若目标是低成本推理，会有意选择更小模型+更多数据（过训练）"
+        }
+      ]
+    },
+    {
+      "id": "t-chinchilla",
+      "cn": "Chinchilla 最优",
+      "en": "Chinchilla-optimal",
+      "def": "在给定算力下，参数与数据应大致按 1:20 同步扩展，而非 Kaplan 早期结论的偏向加参数。",
+      "why": "它纠正了「参数量是唯一重要」的误解，直接改变了 2022 年之后整个行业的训练配方。",
+      "depends": [
+        "t-compute-optimal"
+      ],
+      "contrasts": [],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果按 Kaplan 早期结论（偏重加参数、数据相对不足）训练，会有什么后果？",
+          "expect": "模型「欠训练」：参数容量没被数据充分喂饱，同等算力下损失更高。Chinchilla 的实证表明大部分早期大模型都处于欠训练状态"
+        },
+        {
+          "kind": "application",
+          "q": "为什么现在很多开源模型故意「过训练」（远超 20 token/参数）？",
+          "expect": "因为推理成本占主导。更小的模型 + 更多数据 = 训练多花钱但推理长期更便宜，总账更优"
+        }
+      ]
+    }
+  ]
+}

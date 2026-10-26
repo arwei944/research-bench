@@ -1,0 +1,330 @@
+{
+  "layer": "L5",
+  "terms": [
+    {
+      "id": "t-inference",
+      "cn": "推理",
+      "en": "inference",
+      "def": "用训练好的模型生成输出。与训练相反，只前向、不更新权重。",
+      "why": "它决定产品体验与成本结构。理解它才能看懂「为什么这个模型快、那个贵」。",
+      "depends": [
+        "t-autoregressive"
+      ],
+      "contrasts": [
+        "t-prefill-decode",
+        "t-kv-cache"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "训练和推理，哪个更吃算力、哪个更吃显存带宽？",
+          "expect": "训练吃算力（大量矩阵乘与反传）；推理单次算力需求低，但每生成一个 token 都要把全部权重读一遍，是带宽受限"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "为什么推理优化（批处理、量化）不能直接用到训练上？",
+          "expect": "训练需要精度与完整梯度，量化与大批处理的近似会破坏收敛；且训练是算力受限，优化方向不同"
+        }
+      ]
+    },
+    {
+      "id": "t-decoding",
+      "cn": "解码",
+      "en": "decoding",
+      "def": "从模型输出的概率分布中选择下一个 token 的规则与过程。",
+      "why": "它解释了「为什么同一个提示两次结果不同」。温度、Top-k、Top-p 都是在改这个选择过程。",
+      "depends": [
+        "t-inference"
+      ],
+      "contrasts": [
+        "t-temperature",
+        "t-greedy"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果模型权重完全相同、输入完全相同，为什么两次输出可能不同？",
+          "expect": "解码时的随机采样。temperature>0 或 Top-k/p 采样都会引入随机性；只有贪心解码（T=0）才确定"
+        }
+      ]
+    },
+    {
+      "id": "t-greedy",
+      "cn": "贪心解码",
+      "en": "greedy decoding",
+      "def": "每一步都选概率最高的 token。等价于 temperature=0。",
+      "why": "它是最「可复现」的解码方式。但注意：**贪心不等于最优**，且不少推理框架在 T=0 下仍非严格确定。",
+      "depends": [
+        "t-decoding"
+      ],
+      "contrasts": [
+        "t-temperature"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "贪心解码每一步都选最好的，为什么最终结果可能不是全局最好的？",
+          "expect": "局部最优不等于全局最优：选了一个高概率 token 可能让后续路径整体变差。束搜索正是为此保留多条路径"
+        },
+        {
+          "kind": "application",
+          "q": "为什么有些框架在 temperature=0 时仍不能保证完全复现？",
+          "expect": "浮点累加顺序、批处理中不同请求的 kernel 选择、并行归约的不确定性都会造成微小差异，进而在接近的候选间翻转"
+        }
+      ]
+    },
+    {
+      "id": "t-temperature",
+      "cn": "温度",
+      "en": "temperature",
+      "def": "把 logits 除以 T 再做 softmax。T<1 更集中（更确定），T>1 更平坦（更随机）。",
+      "why": "它是最常被误用的参数。很多人以为「调高温度 = 更聪明」，实际是更随机、更容易出错。",
+      "depends": [
+        "t-decoding"
+      ],
+      "contrasts": [
+        "t-top-k",
+        "t-top-p"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "把温度从 0.7 调到 1.5，模型的「能力」会提升吗？",
+          "expect": "不会。温度只改变采样分布的平坦度，不改变模型的知识或推理能力；高温度让低概率（往往更差）的 token 更容易被选中，通常降低准确率"
+        },
+        {
+          "kind": "application",
+          "q": "什么任务适合低温度？什么任务适合高温度？",
+          "expect": "低温度（0~0.3）：数学、代码、抽取、需要确定性的任务。高温度（0.8~1.2）：头脑风暴、创意写作、需要多样性采样（如自一致性投票）"
+        }
+      ]
+    },
+    {
+      "id": "t-top-k",
+      "cn": "Top-k 采样",
+      "en": "top-k sampling",
+      "def": "只在概率最高的 k 个 token 里采样，其余概率置零。",
+      "why": "它防止采到极低概率的荒谬 token。但 k 固定，在「分布很尖」和「分布很平」时都不理想。",
+      "depends": [
+        "t-decoding"
+      ],
+      "contrasts": [
+        "t-top-p"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "Top-k 和 Top-p 的核心区别是什么？各自的问题在哪？",
+          "expect": "Top-k 固定候选数，Top-p 固定累积概率质量。k 固定时：分布尖锐处仍纳入过多差候选，分布平坦处又砍掉合理候选；Top-p 自适应但阈值仍需调"
+        }
+      ]
+    },
+    {
+      "id": "t-top-p",
+      "cn": "核采样 / Top-p",
+      "en": "nucleus sampling",
+      "def": "按概率降序累积，取累积概率刚好达到 p 的最小集合，在其中采样。",
+      "why": "它比 Top-k 更自适应，是当前默认方案。理解它就知道为什么「同样 top_p=0.9」在不同上下文下候选数差别很大。",
+      "depends": [
+        "t-decoding"
+      ],
+      "contrasts": [
+        "t-top-k",
+        "t-temperature"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么 top_p=0.9 时，候选 token 的数量会随上下文变化？",
+          "expect": "Top-p 按累积概率取集合：分布尖锐时少数几个 token 就占满 90%，集合小；分布平坦时要很多 token 才够 90%，集合大。这正是它相对 Top-k 的优势"
+        }
+      ]
+    },
+    {
+      "id": "t-kv-cache",
+      "cn": "键值缓存",
+      "en": "KV cache",
+      "def": "把已算过的 K/V 存下来，避免每生成一个 token 就重算整段上下文的注意力。",
+      "why": "它是「长上下文为什么贵」和「为什么有 PagedAttention」的唯一原因。不理解它，就看不懂推理成本。",
+      "depends": [
+        "t-attention",
+        "t-qkv"
+      ],
+      "contrasts": [
+        "t-prefill-decode"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果去掉 KV cache，生成第 1000 个 token 要算多少次注意力？",
+          "expect": "要重算前 1000 个位置的全注意力，总成本从 O(n) 退化为 O(n²) 累计；生成会慢几个数量级"
+        },
+        {
+          "kind": "application",
+          "q": "KV cache 显存占用由哪些量决定？与 MoE 有关吗？",
+          "expect": "约 2 × 层数 × KV头数 × head_dim × 序列长度 × 批大小 × 字节数。与 FFN 是否 MoE 无关，只看注意力的 KV 结构"
+        }
+      ]
+    },
+    {
+      "id": "t-prefill-decode",
+      "cn": "预填充 / 解码",
+      "en": "prefill / decode",
+      "def": "推理的两个阶段：prefill 并行处理整段输入（算力受限），decode 逐 token 生成（带宽受限）。",
+      "why": "它是所有推理性能讨论的坐标系。TTFT 由 prefill 决定，tokens/s 由 decode 决定，优化手段完全不同。",
+      "depends": [
+        "t-kv-cache",
+        "t-inference"
+      ],
+      "contrasts": [
+        "t-ttft"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "为什么 prefill 阶段适合大 batch，而 decode 阶段不适合？",
+          "expect": "prefill 是并行矩阵乘、算力受限，batch 越大利用率越高；decode 每步只算一个 token、带宽受限，大 batch 会线性拉长单请求延迟且收益递减"
+        },
+        {
+          "kind": "application",
+          "q": "一个请求「输入 10 万 token，输出 100 token」，瓶颈在哪？",
+          "expect": "几乎全在 prefill：10 万 token 的注意力是 O(n²) 量级；输出只有 100 步，decode 成本相对可忽略。这决定了长文档场景要优化 prefill（前缀缓存、稀疏注意力）"
+        }
+      ]
+    },
+    {
+      "id": "t-ttft",
+      "cn": "首 token 延迟",
+      "en": "TTFT",
+      "def": "Time To First Token：从发出请求到收到第一个输出 token 的时间。",
+      "why": "它是用户「感觉快不快」的关键。TTFT 差 2 秒，用户体感差一倍，即使总时长一样。",
+      "depends": [
+        "t-prefill-decode"
+      ],
+      "contrasts": [
+        "t-tokens-per-sec"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么流式输出能改善体感，但不能改善 TTFT？",
+          "expect": "流式让后续 token 边生成边显示，改善的是「感知等待」与中途可读性；TTFT 由 prefill 决定，流式不改变第一个 token 何时算出来"
+        }
+      ]
+    },
+    {
+      "id": "t-tokens-per-sec",
+      "cn": "每秒词元",
+      "en": "tokens/s",
+      "def": "decode 阶段每秒生成的 token 数，衡量「读起来快不快」。",
+      "why": "它和 TTFT 是两个独立指标。很多「加速」只是提升吞吐（batch），单请求 tokens/s 反而下降。",
+      "depends": [
+        "t-prefill-decode"
+      ],
+      "contrasts": [],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "为什么增大批处理后，系统总吞吐上升但单用户的 tokens/s 可能下降？",
+          "expect": "decode 是带宽受限：一批请求共享同一份权重读取，总吞吐提升；但每步要处理的序列变多，单请求每步耗时变长，故单用户速度下降"
+        }
+      ]
+    },
+    {
+      "id": "t-streaming",
+      "cn": "流式输出",
+      "en": "streaming",
+      "def": "模型每生成一个 token 就立即推送给客户端，而不是等全部生成完再返回。",
+      "why": "它是「体感速度」的主要来源。也是长回答场景的必备体验。",
+      "depends": [
+        "t-autoregressive"
+      ],
+      "contrasts": [
+        "t-ttft"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "流式输出会给后端带来哪些额外复杂度？",
+          "expect": "连接要长驻（SSE/WebSocket）、错误处理要在流中途进行、超时与取消要能中断生成、代理与负载均衡要支持分块传输"
+        }
+      ]
+    },
+    {
+      "id": "t-cot",
+      "cn": "思维链",
+      "en": "CoT",
+      "def": "让模型在给出最终答案前先写出推理步骤，通常能提升多步推理任务的表现。",
+      "why": "它是「用输出换质量」的最简单手段。但注意：**写出的推理过程不一定忠实于模型真实计算**。",
+      "depends": [],
+      "contrasts": [
+        "t-self-consistency"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "CoT 提升了准确率，是否说明模型真的在按写出的步骤计算？",
+          "expect": "不必然。已有实证（arXiv:2609.17119）表明模型的自解释不一定忠实于其真实行为；CoT 可能只是提供了额外计算量或改变了分布"
+        },
+        {
+          "kind": "application",
+          "q": "什么任务上 CoT 帮助不大甚至有害？",
+          "expect": "简单事实检索、单步分类：多余推理会引入错误与成本；以及输出格式严格受限的场景（推理过程占用输出预算）"
+        }
+      ]
+    },
+    {
+      "id": "t-test-time-compute",
+      "cn": "测试时计算",
+      "en": "test-time compute",
+      "def": "推理阶段多花算力（更长 CoT、多次采样、搜索）来换取更好结果。",
+      "why": "它是「不改模型也能提升」的第二条路（第一条是提示工程）。也是当前 scaling 的新方向。",
+      "depends": [
+        "t-inference",
+        "t-cot"
+      ],
+      "contrasts": [
+        "t-self-consistency",
+        "t-scaling-law"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "测试时计算的收益会一直递增吗？",
+          "expect": "不会。存在收益递减，且受模型自身能力上界限制：模型完全不会的题，多采样也选不出正确答案；此外成本线性上升"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "同样的算力预算，应该花在训练更大的模型上还是推理时多采样？",
+          "expect": "取决于任务与预算。难且可验证的任务（数学/代码）测试时计算性价比高；需要广博知识的任务更依赖训练规模。实际常两者结合"
+        }
+      ]
+    },
+    {
+      "id": "t-self-consistency",
+      "cn": "自一致性",
+      "en": "self-consistency",
+      "def": "对同一问题采样多条推理路径，对最终答案投票取多数。",
+      "why": "它是最简单有效的测试时计算手段。前提是答案可聚合（数值、选项），否则不适用。",
+      "depends": [
+        "t-test-time-compute",
+        "t-temperature"
+      ],
+      "contrasts": [
+        "t-cot"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "为什么自一致性要求温度大于 0？",
+          "expect": "温度为 0 时多次采样结果完全相同，投票没有意义。必须引入采样多样性才能让不同推理路径产生差异"
+        },
+        {
+          "kind": "application",
+          "q": "什么任务不适合自一致性？",
+          "expect": "开放式生成（无法聚合答案）、答案空间巨大（投票失效）、以及模型系统性错误的情况（多数票一致地错，投票反而放大错误）"
+        }
+      ]
+    }
+  ]
+}

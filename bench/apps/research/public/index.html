@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>研究工作台</title>
+<style>
+  /* 深色（默认）：直接用平台注入的变量，若无则回落自有值 */
+  :root, [data-theme="dark"] {
+    --bg: var(--bench-bg, #0f1115);
+    --bg-panel: var(--bench-panel, #161a21);
+    --bg-elev: var(--bench-elev, #1c212a);
+    --border: var(--bench-line, #262d38);
+    --border-hi: var(--bench-line2, #3a4453);
+    --text: var(--bench-fg, #e6e9ef);
+    --text-muted: var(--bench-fg2, #9aa4b2);
+    --text-dim: var(--bench-fg3, #6b7583);
+    --accent: var(--bench-ac, #4f8ef7);
+    --accent-soft: #1d3a66;
+    --ok: var(--bench-ok, #34d399);
+    --warn: var(--bench-warn, #fbbf24);
+    --err: var(--bench-err, #f87171);
+    --header-bg: rgba(15,17,21,.88);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  /* 浅色 */
+  [data-theme="light"] {
+    --bg: var(--bench-bg, #f6f7f9);
+    --bg-panel: var(--bench-panel, #ffffff);
+    --bg-elev: var(--bench-elev, #f0f2f5);
+    --border: var(--bench-line, #e2e6ec);
+    --border-hi: var(--bench-line2, #c8cfda);
+    --text: var(--bench-fg, #161b22);
+    --text-muted: var(--bench-fg2, #4c5866);
+    --text-dim: var(--bench-fg3, #7b8794);
+    --accent: var(--bench-ac, #2563eb);
+    --accent-soft: #dbeafe;
+    --ok: var(--bench-ok, #059669);
+    --warn: var(--bench-warn, #b45309);
+    --err: var(--bench-err, #dc2626);
+    --header-bg: rgba(246,247,249,.9);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+
+  /* ---------- 布局 ---------- */
+  .app { max-width: 1180px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--header-bg, rgba(15,17,21,.88));
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    margin: 0 -20px 0; padding: 14px 20px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand h1 { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: .2px; }
+  .brand .sub { font-size: 12px; color: var(--text-dim); }
+  .status { margin-left: auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); flex: none; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 8px rgba(52,211,153,.6); }
+  .dot.warn { background: var(--warn); }
+  .dot.err { background: var(--err); }
+
+  nav.tabs { display: flex; gap: 4px; margin-top: 12px; overflow-x: auto; }
+  nav.tabs button {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 9px 14px; cursor: pointer; color: var(--text-dim);
+    font-size: 13px; font-weight: 600; white-space: nowrap;
+  }
+  nav.tabs button:hover { color: var(--text-muted); }
+  nav.tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  main { padding-top: 22px; }
+  section[hidden] { display: none !important; }
+
+  /* ---------- 卡片 ---------- */
+  .card {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px; margin-bottom: 16px;
+  }
+  .card > h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-dim); margin: 0 0 14px; font-weight: 700;
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+  .grow { flex: 1 1 260px; min-width: 0; }
+
+  input[type=text], textarea, select {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; width: 100%;
+    outline: none; transition: border-color .12s;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; font-family: var(--mono); font-size: 13px; }
+
+  button.btn {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 10px 18px; cursor: pointer;
+    font-weight: 600; font-size: 13px; transition: opacity .12s;
+  }
+  button.btn:hover { opacity: .88; }
+  button.btn:disabled { opacity: .45; cursor: default; }
+  button.btn.ghost {
+    background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-muted);
+  }
+  button.btn.ghost:hover { border-color: var(--border-hi); color: var(--text); }
+  button.btn.sm { padding: 6px 12px; font-size: 12px; }
+
+  /* ---------- 结果 ---------- */
+  .result {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 13px 15px; margin-bottom: 9px; background: var(--bg);
+  }
+  .result .head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .result .title { font-weight: 600; font-size: 13.5px; }
+  .result .meta { font-size: 11.5px; color: var(--text-dim); }
+  .result .snip { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.55; }
+  .result a { color: var(--accent); text-decoration: none; font-size: 11.5px; }
+  .result a:hover { text-decoration: underline; }
+
+  .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700;
+    padding: 1px 7px; border-radius: 5px; letter-spacing: .02em;
+  }
+  .tag.src { background: var(--accent-soft); color: #93bbfd; }
+  .tag.evA { background: #14361f; color: var(--ok); }
+  .tag.evB { background: #3a2f14; color: var(--warn); }
+  .tag.evC { background: #2a2f38; color: var(--text-muted); }
+
+  .markdown {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 24px; font-size: 13.5px; line-height: 1.72;
+    overflow-wrap: break-word; max-height: 720px; overflow-y: auto;
+  }
+  .markdown h1 { font-size: 20px; margin: 0 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .markdown h2 { font-size: 15px; margin: 24px 0 10px; color: #cdd6e4; }
+  .markdown h3 { font-size: 13.5px; margin: 18px 0 8px; color: var(--text-muted); }
+  .markdown p { margin: 9px 0; }
+  .markdown ul, .markdown ol { margin: 9px 0; padding-left: 22px; }
+  .markdown li { margin: 5px 0; }
+  .markdown code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12.5px; }
+  .markdown pre { background: var(--bg-elev); padding: 12px; border-radius: 8px; overflow-x: auto; }
+  .markdown pre code { background: none; padding: 0; }
+  .markdown table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 12.5px; }
+  .markdown th, .markdown td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; }
+  .markdown th { background: var(--bg-elev); font-weight: 600; }
+  .markdown a { color: var(--accent); }
+  .markdown blockquote { border-left: 3px solid var(--border-hi); margin: 12px 0; padding-left: 14px; color: var(--text-muted); }
+
+  /* ---------- 通道网格 ---------- */
+  .grid-ch {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px;
+  }
+  .ch {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 11px; font-size: 12.5px;
+  }
+  .ch .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch .ms { font-size: 10.5px; color: var(--text-dim); font-family: var(--mono); }
+
+  /* ---------- 列表 ---------- */
+  .list { display: flex; flex-direction: column; gap: 7px; }
+  .list-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 13px; font-size: 13px;
+    cursor: pointer; transition: border-color .12s;
+  }
+  .list-item:hover { border-color: var(--border-hi); }
+  .list-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list-item .meta { font-size: 11px; color: var(--text-dim); flex: none; }
+
+  /* ---------- 其它 ---------- */
+  .spinner {
+    display: inline-block; width: 13px; height: 13px;
+    border: 2px solid var(--border-hi); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hint { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+  .msg { font-size: 12.5px; padding: 9px 12px; border-radius: 8px; margin-top: 10px; }
+  .msg.err { background: #3a1a1a; color: #fca5a5; border: 1px solid #5a2626; }
+  .msg.ok { background: #122a1e; color: #86efac; border: 1px solid #1f4a33; }
+  .msg.info { background: #172436; color: #93c5fd; border: 1px solid #24405f; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; }
+  .kpi .v { font-size: 19px; font-weight: 700; font-family: var(--mono); }
+  .kpi .k { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 820px) { .split { grid-template-columns: 1fr; } }
+
+  /* ---- 模式切换的通用规则 ---- */
+  [data-mode="expert"] .novice-only { display: none !important; }
+  [data-mode="novice"] .expert-only { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>研究工作台</h1>
+      <span class="sub">检索 · 核验 · 成稿 · 沉淀</span>
+      <div class="status">
+        <span class="pill"><span class="dot" id="d-svc"></span><span id="t-svc">连接中…</span></span>
+        <span class="pill"><span class="dot" id="d-ch"></span><span id="t-ch">通道 —</span></span>
+        <span class="pill"><span class="dot" id="d-llm"></span><span id="t-llm">模型 —</span></span>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button data-tab="research" class="active">研究</button>
+      <button data-tab="notes">笔记</button>
+      <button data-tab="reports">报告</button>
+      <button data-tab="learn">学习</button>
+      <button data-tab="channels">通道</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ 研究 ============ -->
+    <section id="tab-research">
+      <div class="card">
+        <h2>研究问题</h2>
+        <div class="row">
+          <div class="grow">
+            <input type="text" id="q" placeholder="例：AI 长程自主能力的时间跨度趋势及其可靠性折损" />
+          </div>
+          <select id="per-source" style="width:auto">
+            <option value="3">每源 3 条</option>
+            <option value="5" selected>每源 5 条</option>
+            <option value="8">每源 8 条</option>
+          </select>
+          <button class="btn" id="btn-search">检索</button>
+          <button class="btn ghost" id="btn-report">检索并写报告</button>
+        </div>
+        <div class="hint novice-only">检索会同时查 5 个学术/代码/社区网站。你会看到标题、日期、链接——这些都不是 AI 编的，是真实抓回来的。写报告时也会严格只用这些。</div>
+    <div class="hint expert-only">GET arXiv/OpenAlex/Crossref/GitHub/HN · 相关性过滤(A≥0.4,C≥0.3) · 跨源去重 · 证据分级 A/B/C · 报告仅基于本次检索结果</div>
+        <div id="research-msg"></div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px">试试这些（点击填入）</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn ghost sm example" data-q="AI agent long-horizon task reliability">长程可靠性</button>
+            <button class="btn ghost sm example" data-q="benchmark contamination reward hacking agent evaluation">基准污染与奖励黑客</button>
+            <button class="btn ghost sm example" data-q="AI capability frontier time horizon doubling">能力前沿趋势</button>
+            <button class="btn ghost sm example" data-q="mechanistic interpretability sparse autoencoder">机制可解释性</button>
+            <button class="btn ghost sm example" data-q="continual learning catastrophic forgetting language model">持续学习</button>
+            <button class="btn ghost sm example" data-q="LLM agent finance earnings analysis">金融 agent</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="card-results" hidden>
+        <h2>检索结果 <span id="results-count" style="text-transform:none;letter-spacing:0"></span></h2>
+        <div id="results"></div>
+      </div>
+
+      <div class="card" id="card-verify" hidden>
+        <h2>引用核验</h2>
+        <div id="verify-body"></div>
+      </div>
+
+      <div class="card" id="card-report" hidden>
+        <h2>报告 <span id="report-status" style="text-transform:none;letter-spacing:0"></span></h2>
+        <div class="markdown" id="report-body"></div>
+        <div class="row" style="margin-top:14px">
+          <div class="grow"><input type="text" id="report-title" placeholder="报告标题（落盘用）" /></div>
+          <button class="btn" id="btn-save-report">保存到 data/reports/</button>
+          <button class="btn ghost" id="btn-copy-report">复制 Markdown</button>
+        </div>
+        <div id="report-msg"></div>
+      </div>
+    </section>
+
+    <!-- ============ 笔记 ============ -->
+    <section id="tab-notes" hidden>
+      <div class="card">
+        <h2>新建笔记</h2>
+        <div class="row" style="margin-bottom:10px">
+          <div class="grow"><input type="text" id="note-title" placeholder="标题" /></div>
+          <select id="note-domain" style="width:auto">
+            <option value="academic">学科</option>
+            <option value="finance">金融</option>
+            <option value="learning">学习</option>
+          </select>
+          <select id="note-conf" style="width:auto">
+            <option value="high">置信度高</option>
+            <option value="medium" selected>置信度中</option>
+            <option value="low">置信度低</option>
+          </select>
+        </div>
+        <textarea id="note-body" placeholder="正文（Markdown）"></textarea>
+        <div class="row" style="margin-top:10px">
+          <div class="grow"><input type="text" id="note-tags" placeholder="标签，逗号分隔（可选）" /></div>
+          <button class="btn" id="btn-save-note">保存笔记</button>
+        </div>
+        <div id="note-msg"></div>
+      </div>
+      <div class="card">
+        <h2>已有笔记 <button class="btn ghost sm" id="btn-refresh-notes" style="float:right">刷新</button></h2>
+        <div class="list" id="notes-list"></div>
+      </div>
+      <div class="card" id="card-note-view" hidden>
+        <h2>笔记内容</h2>
+        <div class="markdown" id="note-view"></div>
+      </div>
+    </section>
+
+    <!-- ============ 报告 ============ -->
+    <section id="tab-reports" hidden>
+      <div class="card">
+        <h2>已保存报告 <button class="btn ghost sm" id="btn-refresh-reports" style="float:right">刷新</button></h2>
+        <div class="list" id="reports-list"></div>
+      </div>
+      <div class="card" id="card-report-view" hidden>
+        <h2>报告内容</h2>
+        <div class="markdown" id="report-view"></div>
+      </div>
+    </section>
+
+    <!-- ============ 学习 ============ -->
+    <section id="tab-learn" hidden>
+      <div class="card">
+        <h2>费曼式讲解</h2>
+        <div class="row">
+          <div class="grow"><input type="text" id="concept" placeholder="例：pass^k 可靠性指标" /></div>
+          <select id="level" style="width:auto">
+            <option>小学生</option>
+            <option selected>大学生</option>
+            <option>同行专家</option>
+          </select>
+          <button class="btn" id="btn-explain">讲解</button>
+        </div>
+        <div class="markdown" id="explain-body" style="margin-top:14px" hidden></div>
+      </div>
+      <div class="card">
+        <h2>批判性审视</h2>
+        <div class="row">
+          <div class="grow"><input type="text" id="crit-q" placeholder="要审视的论断或研究问题" /></div>
+          <button class="btn" id="btn-critique">审视</button>
+        </div>
+        <div class="hint">会先真实检索该问题的证据，再让模型只针对这些证据找弱点与反方观点。</div>
+        <div class="markdown" id="crit-body" style="margin-top:14px" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ 通道 ============ -->
+    <section id="tab-channels" hidden>
+      <div class="card">
+        <h2>通道状态 <button class="btn ghost sm" id="btn-reprobe" style="float:right">重新探测</button></h2>
+        <div class="kpis" style="margin-bottom:14px" id="ch-kpis"></div>
+        <div class="grid-ch" id="ch-grid"></div>
+      </div>
+      <div class="card">
+        <h2>最近操作</h2>
+        <div class="list" id="sessions-list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/static/kit.js"></script>
+<script>
+// ===========================================================================
+// 基础：主题/模式/API/转义/Markdown 全部来自公共套件 kit.js
+//
+// 迁移前这个文件自带了一份 md()/esc()/主题同步/模式同步（约 130 行重复代码）。
+// 现在统一走 Bench.kit，避免各应用各自实现走偏。
+// ===========================================================================
+const $ = (id) => document.getElementById(id);
+const esc = Bench.kit.esc;
+const md = Bench.kit.md;
+
+// 本应用的 API 前缀是 /api/research
+const api = Bench.api("research");
+
+const msg = (el, kind, text) => {
+  if (!el) return;
+  el.innerHTML = text ? `<div class="msg ${kind}">${esc(text)}</div>` : "";
+};
+const busy = Bench.kit.busy;
+
+// ===========================================================================
+// Tab 切换
+// ===========================================================================
+document.querySelectorAll("nav.tabs button").forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll("nav.tabs button").forEach((x) => x.classList.toggle("active", x === b));
+    document.querySelectorAll("main > section").forEach((s) => (s.hidden = s.id !== `tab-${b.dataset.tab}`));
+    if (b.dataset.tab === "notes") loadNotes();
+    if (b.dataset.tab === "reports") loadReports();
+    if (b.dataset.tab === "channels") { loadChannels(); loadSessions(); }
+  };
+});
+
+// 示例查询：点击填入输入框并聚焦
+document.querySelectorAll(".example").forEach((b) => {
+  b.onclick = () => {
+    $("q").value = b.dataset.q;
+    $("q").focus();
+  };
+});
+
+// ===========================================================================
+// 健康状态
+// ===========================================================================
+async function loadHealth() {
+  try {
+    const h = await api("/health");
+    $("d-svc").className = "dot ok";
+    $("t-svc").textContent = `服务正常 · ${h.uptimeSec}s`;
+    $("d-ch").className = "dot " + (h.channels.ok === h.channels.total ? "ok" : h.channels.ok > 10 ? "warn" : "err");
+    $("t-ch").textContent = `通道 ${h.channels.ok}/${h.channels.total}`;
+    $("d-llm").className = "dot " + (h.llm.ok ? "ok" : "err");
+    $("t-llm").textContent = h.llm.ok ? `模型 ${h.llm.model}` : "模型不可用";
+  } catch (e) {
+    $("d-svc").className = "dot err";
+    $("t-svc").textContent = "服务异常";
+  }
+}
+
+// ===========================================================================
+// 研究
+// ===========================================================================
+let lastSearch = null;
+
+function renderResults(data) {
+  const box = $("results");
+  box.innerHTML = "";
+  $("results-count").textContent = `· ${data.count} 条 · ${new Date(data.searchedAt).toLocaleTimeString()}`;
+  if (data.errors && data.errors.length) {
+    msg($("research-msg"), "info", `部分通道失败：${data.errors.join("; ")}`);
+  }
+  for (const r of data.results) {
+    const d = document.createElement("div");
+    d.className = "result";
+    d.innerHTML = `
+      <div class="head">
+        <span class="tag src">${esc(r.source)}</span>
+        <span class="tag ev${esc(r.evidence)}" title="${r.evidence === "A" ? "A 级：论文原文或官方数据，最可信" : r.evidence === "B" ? "B 级：权威二手评测" : "C 级：社区/代码仓库，仅供参考"}">证据${esc(r.evidence)}级</span>
+        <span class="title">${esc(r.title || "(无标题)")}</span>
+      </div>
+      <div class="meta">${esc(r.date || "")}${r.citedBy != null ? " · 被引 " + r.citedBy : ""}${r.authors && r.authors.length ? " · " + esc(r.authors.join(", ")) : ""}</div>
+      ${r.snippet ? `<div class="snip">${esc(r.snippet)}</div>` : ""}
+      ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>` : ""}
+    `;
+    box.appendChild(d);
+  }
+  $("card-results").hidden = false;
+}
+
+$("btn-search").onclick = async () => {
+  const q = $("q").value.trim();
+  if (!q) return msg($("research-msg"), "err", "请先输入研究问题");
+  busy($("btn-search"), true, "检索中…");
+  msg($("research-msg"), "", "");
+  try {
+    const data = await api("/search", {
+      method: "POST",
+      body: JSON.stringify({ query: q, perSource: Number($("per-source").value) }),
+    });
+    lastSearch = data;
+    renderResults(data);
+  } catch (e) {
+    msg($("research-msg"), "err", "检索失败：" + e.message);
+  } finally {
+    busy($("btn-search"), false);
+  }
+};
+
+$("btn-report").onclick = async () => {
+  const q = $("q").value.trim();
+  if (!q) return msg($("research-msg"), "err", "请先输入研究问题");
+  busy($("btn-report"), true, "检索并写作中…");
+  msg($("research-msg"), "info", "正在真实检索 → 核验 → 让模型基于检索结果写作，请稍候（约 30–90 秒）…");
+  $("card-report").hidden = true;
+  $("card-verify").hidden = true;
+  try {
+    const data = await api("/report", {
+      method: "POST",
+      body: JSON.stringify({ question: q, perSource: Number($("per-source").value) }),
+    });
+    lastSearch = data.search;
+    renderResults(data.search);
+    $("report-title").value = q;
+
+    if (data.verification) {
+      const v = data.verification;
+      $("verify-body").innerHTML = `
+        <div class="hint" style="margin-bottom:10px">共核验 ${v.total} 条，通过 ${v.ok} 条</div>
+        ${v.results.map((r) => `
+          <div class="result">
+            <div class="head">
+              <span class="tag ${r.status.startsWith("✅") ? "evA" : "evC"}">${esc(r.status)}</span>
+              <span class="title" style="font-size:12.5px">${esc(r.target)}</span>
+            </div>
+            ${r.hits.map((h) => `<div class="meta">${esc(h.via)} · ${esc(h.title || "")} ${h.date ? "· " + esc(h.date) : ""}${h.citedBy != null ? " · 被引 " + h.citedBy : ""}</div>`).join("")}
+          </div>`).join("")}
+      `;
+      $("card-verify").hidden = false;
+    }
+
+    if (data.markdown) {
+      $("report-body").innerHTML = md(data.markdown);
+      $("report-status").textContent = data.llmError ? `· 模型报错：${data.llmError}` : "· 已生成";
+      $("card-report").hidden = false;
+      msg($("research-msg"), "ok", "报告已生成。可保存到 data/reports/。");
+      $("card-report").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      msg($("research-msg"), "err", data.warning || data.llmError || "未生成报告");
+    }
+  } catch (e) {
+    msg($("research-msg"), "err", "生成失败：" + e.message);
+  } finally {
+    busy($("btn-report"), false);
+  }
+};
+
+$("btn-save-report").onclick = async () => {
+  const mdText = $("report-body").dataset.raw || "";
+  const raw = window.__lastReportMarkdown || "";
+  if (!raw) return msg($("report-msg"), "err", "没有可保存的报告");
+  busy($("btn-save-report"), true, "保存中…");
+  try {
+    const r = await api("/report/save", {
+      method: "POST",
+      body: JSON.stringify({ title: $("report-title").value || "report", markdown: raw }),
+    });
+    msg($("report-msg"), "ok", `已保存：${r.path}（${r.size} 字节）`);
+  } catch (e) {
+    msg($("report-msg"), "err", "保存失败：" + e.message);
+  } finally {
+    busy($("btn-save-report"), false);
+  }
+};
+
+$("btn-copy-report").onclick = async () => {
+  const raw = window.__lastReportMarkdown || "";
+  if (!raw) return;
+  try {
+    await navigator.clipboard.writeText(raw);
+    msg($("report-msg"), "ok", "已复制到剪贴板");
+  } catch {
+    msg($("report-msg"), "err", "复制失败（浏览器权限）");
+  }
+};
+
+// ===========================================================================
+// 笔记
+// ===========================================================================
+async function loadNotes() {
+  try {
+    const d = await api("/notes");
+    const box = $("notes-list");
+    if (!d.notes.length) { box.innerHTML = `<div class="hint">还没有笔记。在上面新建一条。</div>`; return; }
+    box.innerHTML = "";
+    for (const n of d.notes) {
+      const el = document.createElement("div");
+      el.className = "list-item";
+      el.innerHTML = `<span class="name">${esc(n.title)}</span>
+        <span class="meta">${esc(n.domain)} · ${(n.size / 1024).toFixed(1)}KB · ${new Date(n.modified).toLocaleString()}</span>`;
+      el.onclick = async () => {
+        const txt = await api("/notes/" + encodeURIComponent(n.file));
+        $("note-view").innerHTML = md(txt);
+        $("card-note-view").hidden = false;
+        $("card-note-view").scrollIntoView({ behavior: "smooth" });
+      };
+      box.appendChild(el);
+    }
+  } catch (e) {
+    $("notes-list").innerHTML = `<div class="msg err">${esc(e.message)}</div>`;
+  }
+}
+
+$("btn-refresh-notes").onclick = loadNotes;
+
+$("btn-save-note").onclick = async () => {
+  const title = $("note-title").value.trim();
+  const body = $("note-body").value.trim();
+  if (!title || !body) return msg($("note-msg"), "err", "标题和正文都要填");
+  busy($("btn-save-note"), true, "保存中…");
+  try {
+    const tags = $("note-tags").value.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
+    const r = await api("/notes", {
+      method: "POST",
+      body: JSON.stringify({ title, body, domain: $("note-domain").value, confidence: $("note-conf").value, tags }),
+    });
+    msg($("note-msg"), "ok", `已保存：${r.path}`);
+    $("note-title").value = ""; $("note-body").value = ""; $("note-tags").value = "";
+    loadNotes();
+  } catch (e) {
+    msg($("note-msg"), "err", "保存失败：" + e.message);
+  } finally {
+    busy($("btn-save-note"), false);
+  }
+};
+
+// ===========================================================================
+// 报告
+// ===========================================================================
+async function loadReports() {
+  try {
+    const d = await api("/reports");
+    const box = $("reports-list");
+    if (!d.reports.length) { box.innerHTML = `<div class="hint">还没有报告。在「研究」页生成后保存。</div>`; return; }
+    box.innerHTML = "";
+    for (const r of d.reports) {
+      const el = document.createElement("div");
+      el.className = "list-item";
+      el.innerHTML = `<span class="name">${esc(r.file)}</span>
+        <span class="meta">${(r.size / 1024).toFixed(1)}KB · ${new Date(r.modified).toLocaleString()}</span>`;
+      el.onclick = async () => {
+        const txt = await api("/reports/" + encodeURIComponent(r.file));
+        $("report-view").innerHTML = md(txt);
+        $("card-report-view").hidden = false;
+        $("card-report-view").scrollIntoView({ behavior: "smooth" });
+      };
+      box.appendChild(el);
+    }
+  } catch (e) {
+    $("reports-list").innerHTML = `<div class="msg err">${esc(e.message)}</div>`;
+  }
+}
+$("btn-refresh-reports").onclick = loadReports;
+
+// ===========================================================================
+// 学习
+// ===========================================================================
+$("btn-explain").onclick = async () => {
+  const c = $("concept").value.trim();
+  if (!c) return;
+  busy($("btn-explain"), true, "讲解中…");
+  try {
+    const d = await api("/explain", { method: "POST", body: JSON.stringify({ concept: c, level: $("level").value }) });
+    $("explain-body").innerHTML = md(d.markdown);
+    $("explain-body").hidden = false;
+  } catch (e) {
+    $("explain-body").innerHTML = `<div class="msg err">${esc(e.message)}</div>`;
+    $("explain-body").hidden = false;
+  } finally { busy($("btn-explain"), false); }
+};
+
+$("btn-critique").onclick = async () => {
+  const q = $("crit-q").value.trim();
+  if (!q) return;
+  busy($("btn-critique"), true, "审视中…");
+  try {
+    const d = await api("/critique", { method: "POST", body: JSON.stringify({ question: q }) });
+    $("crit-body").innerHTML = d.markdown ? md(d.markdown) : `<div class="msg info">${esc(d.warning || "")}</div>`;
+    $("crit-body").hidden = false;
+  } catch (e) {
+    $("crit-body").innerHTML = `<div class="msg err">${esc(e.message)}</div>`;
+    $("crit-body").hidden = false;
+  } finally { busy($("btn-critique"), false); }
+};
+
+// ===========================================================================
+// 通道
+// ===========================================================================
+async function loadChannels() {
+  $("ch-grid").innerHTML = `<div class="hint"><span class="spinner"></span> 正在探测 14 条通道…</div>`;
+  try {
+    const d = await api("/channels");
+    $("ch-kpis").innerHTML = `
+      <div class="kpi"><div class="v" style="color:${d.ok === d.total ? "var(--ok)" : d.ok > 10 ? "var(--warn)" : "var(--err)"}">${d.ok}/${d.total}</div><div class="k">可用通道</div></div>
+      <div class="kpi"><div class="v">${d.avgMs}<span style="font-size:12px">ms</span></div><div class="k">平均延迟</div></div>
+      <div class="kpi"><div class="v" style="font-size:14px">${new Date(d.fetchedAt).toLocaleTimeString()}</div><div class="k">探测时间</div></div>
+    `;
+    $("ch-grid").innerHTML = d.channels.map((c) => `
+      <div class="ch" title="${esc(c.note || c.group)}">
+        <span class="dot ${c.ok ? "ok" : "err"}"></span>
+        <span class="name">${esc(c.name)}</span>
+        <span class="ms expert-only">${c.ok ? c.ms + "ms" : esc((c.note || "失败").slice(0, 10))}</span>
+        <span class="ms novice-only">${c.ok ? (c.ms < 2000 ? "正常" : "有点慢") : "连不上"}</span>
+      </div>`).join("");
+  } catch (e) {
+    $("ch-grid").innerHTML = `<div class="msg err">${esc(e.message)}</div>`;
+  }
+}
+$("btn-reprobe").onclick = loadChannels;
+
+async function loadSessions() {
+  try {
+    const d = await api("/sessions");
+    if (!d.sessions.length) { $("sessions-list").innerHTML = `<div class="hint">暂无记录</div>`; return; }
+    $("sessions-list").innerHTML = d.sessions.map((s) => `
+      <div class="list-item" style="cursor:default">
+        <span class="tag src">${esc(s.action)}</span>
+        <span class="name">${esc(s.query || s.question || s.file || "")}</span>
+        <span class="meta">${new Date(s.at).toLocaleString()}</span>
+      </div>`).join("");
+  } catch { /* ignore */ }
+}
+
+// 保存报告时把原始 markdown 存到全局，供复制/落盘
+const _origReport = () => window.__lastReportMarkdown || "";
+const origInnerHTML = (el) => el;
+
+// 劫持 /api/report 响应，记录原始 markdown
+const _fetch = window.fetch;
+window.fetch = async (...args) => {
+  const res = await _fetch(...args);
+  try {
+    if (String(args[0]).endsWith("/api/research/report") && res.headers.get("content-type")?.includes("json")) {
+      const clone = res.clone();
+      const data = await clone.json();
+      if (data.markdown) window.__lastReportMarkdown = data.markdown;
+    }
+  } catch { /* ignore */ }
+  return res;
+};
+
+// 启动
+loadHealth();
+setInterval(loadHealth, 30000);
+</script>
+<script>
+// ---- 主题 / 模式 / 设计：统一由 kit.js 处理 ----
+// 迁移前这里有两大段重复实现（主题变量映射 + 模式文案切换），现在只留一行。
+(function () {
+  function ready() {
+    if (!window.Bench || !window.Bench.kit) return;
+    Bench.kit.theme.sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+  else ready();
+})();
+</script>
+</body>
+</html>

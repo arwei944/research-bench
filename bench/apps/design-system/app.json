@@ -1,0 +1,14 @@
+{
+  "id": "design-system",
+  "name": "设计系统",
+  "icon": "design-system",
+  "tagline": "10 款外壳设计的 token 集与切换器。新增一款设计只需加一个对象。",
+  "color": "#a78bfa",
+  "order": 20,
+  "version": "1.0.0",
+  "layer": "core",
+  "entry": "index.html",
+  "requires": [
+    "shell"
+  ]
+}

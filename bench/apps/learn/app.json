@@ -1,0 +1,15 @@
+{
+  "id": "learn",
+  "name": "学习",
+  "icon": "learn",
+  "tagline": "λ 演算实验室 · 概念地图 · 间隔复习 · 苏格拉底提问。禁止直接给答案。",
+  "color": "#a78bfa",
+  "order": 20,
+  "version": "1.0.0",
+  "entry": "index.html",
+  "layer": "app",
+  "requires": [
+    "mode",
+    "design-system"
+  ]
+}

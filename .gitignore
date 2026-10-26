@@ -1,0 +1,73 @@
+# ============================================================
+# 运行时数据 —— 不纳入版本控制
+# ============================================================
+bench/data/bench.pid
+bench/data/bench.log
+bench/data/theme.json
+bench/data/trace.jsonl
+bench/data/design.json
+bench/data/mode.json
+
+# 应用自己的运行时数据（进度、报告、笔记、运行记录）
+bench/apps/*/data/
+bench/apps/*/data
+
+# kernel 的实体数据（属于运行时产物，不是源码）
+bench/data/kernel/
+
+# ============================================================
+# 归档资产 —— 体积过大，不进 Git
+# ------------------------------------------------------------
+# archive/atlas-web   1.84 GB  Next.js 旧工作台（含 node_modules）
+# archive/atlas       222 MB   monorepo 后端
+# archive/legacy      358 MB   上个项目的临时下载与脚本产物
+#
+# 这些在 archive/README.md 里说明了来源与恢复方法，
+# 但文件本身不入库（GitHub 单文件上限 100MB，仓库建议 <1GB）。
+# ============================================================
+archive/atlas-web/
+archive/atlas/
+archive/legacy/_retry_tmp/
+archive/legacy/scripts/
+archive/legacy/broken-reports/
+archive/dot-atlas/
+
+# 但归档的说明文档要保留
+!archive/README.md
+!archive/legacy/README.md
+
+# ============================================================
+# 依赖与构建产物
+# ============================================================
+node_modules/
+.pnpm-store/
+dist/
+build/
+.next/
+*.tsbuildinfo
+
+# ============================================================
+# 通用
+# ============================================================
+.DS_Store
+Thumbs.db
+*.log
+!bench/data/bench.log
+.env
+.env.local
+*.local
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 临时目录
+tmp/
+temp/
+_shot/
+_accept/
+_d/
+_ico/
+_lay/
+_rt/

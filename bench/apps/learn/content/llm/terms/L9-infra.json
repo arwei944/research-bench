@@ -1,0 +1,152 @@
+{
+  "layer": "L9",
+  "terms": [
+    {
+      "id": "t-vram",
+      "cn": "显存",
+      "en": "VRAM",
+      "def": "GPU 上的专用内存，模型权重、KV cache、激活值都要放这里。",
+      "why": "它是最硬的约束。**模型跑不跑得起来只看显存**，不是看算力。",
+      "depends": [
+        "t-float-precision"
+      ],
+      "contrasts": [
+        "t-quantization",
+        "t-memory-bandwidth"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "推理一个 70B 模型，仅权重需要多少显存？",
+          "expect": "70B × 每参数字节数：fp16/bf16 约 140GB，int8 约 70GB，int4 约 35GB。还要另加 KV cache 与运行时开销，实际更高"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "为什么「显存不够」不能靠「算得慢一点」来解决？",
+          "expect": "权重必须完整驻留才能参与计算，显存是容量问题不是速度问题。容量不够只能量化、分片到多卡、或换更小模型"
+        }
+      ]
+    },
+    {
+      "id": "t-float-precision",
+      "cn": "浮点精度",
+      "en": "fp32 / fp16 / bf16",
+      "def": "不同位宽的浮点表示。fp32 全精度、fp16 半精度、bf16 有 fp32 的指数范围但只有 8 位尾数。",
+      "why": "它是「显存、速度、数值稳定」三角的调节旋钮。选错精度会直接导致训练发散或推理退化。",
+      "depends": [],
+      "contrasts": [
+        "t-quantization",
+        "t-mixed-precision"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "bf16 和 fp16 都是 16 位，为什么训练更爱 bf16？",
+          "expect": "bf16 保留 8 位指数（与 fp32 同范围），不会因梯度太小而下溢；fp16 指数只有 5 位，范围窄，需要 loss scaling 才能训练"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "把推理从 fp16 降到 int8，为什么有时几乎不掉点，有时崩得厉害？",
+          "expect": "取决于权重的离群值分布与是否做逐通道/分组量化。存在极端离群值的层（常见于某些注意力/FFN 通道）粗粒度量化会严重失真，需要混合精度保留这些层"
+        }
+      ]
+    },
+    {
+      "id": "t-quantization",
+      "cn": "量化",
+      "en": "quantization",
+      "def": "把权重（有时含激活）从 16 位压到 8/4 位，用更少字节表示。",
+      "why": "它是「同一张卡跑更大模型」的主要手段。但量化是有损的，损失在哪里需要实测而非假设。",
+      "depends": [
+        "t-float-precision",
+        "t-vram"
+      ],
+      "contrasts": [
+        "t-mixed-precision"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "训练后量化（PTQ）和量化感知训练（QAT）的区别是什么？",
+          "expect": "PTQ 训练完再量化，简单但精度损失不可控；QAT 在训练时模拟量化误差，效果更好但成本高。绝大多数部署用 PTQ"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "为什么 4 位量化通常比 8 位量化掉点明显更多，即使只差一倍？",
+          "expect": "位宽减少使可表示值数量指数下降（2^4=16 vs 2^8=256）；权重分布被压到极少格点，离群值主导量化步长，导致大部分权重精度被牺牲。需要分组量化、离群值分离等技巧"
+        }
+      ]
+    },
+    {
+      "id": "t-training-vs-inference",
+      "cn": "训练 / 推理",
+      "en": "training vs inference",
+      "def": "训练要前向+反传+更新权重；推理只做前向。",
+      "why": "两者的资源瓶颈完全不同：训练算力受限，推理带宽受限。所有优化手段的选择都源于这个区别。",
+      "depends": [
+        "t-vram",
+        "t-flops"
+      ],
+      "contrasts": [
+        "t-memory-bandwidth"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "为什么推理优化的重点是「减少读权重的次数」（批处理、量化），而不是「减少计算量」？",
+          "expect": "decode 阶段每生成一个 token 都要把全部权重从显存读一遍，算力大量闲置；瓶颈是带宽。批处理让一次权重读取服务多个请求，摊薄带宽成本"
+        }
+      ]
+    },
+    {
+      "id": "t-flops",
+      "cn": "算力",
+      "en": "FLOPs",
+      "def": "浮点运算次数。训练成本、推理成本的基本计量单位。",
+      "why": "它是「这个方案跑不跑得起」的定量答案。粗略估算：训练算力 ≈ 6 × 参数量 × token 数。",
+      "depends": [],
+      "contrasts": [
+        "t-memory-bandwidth"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么训练算力常按 6 × N × D 估算（N 参数、D token）？",
+          "expect": "前向约 2ND（每次乘加算 2 FLOPs），反向约 4ND（算输入梯度与权重梯度），合计约 6ND。这是量级估算，不含注意力等额外开销"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "算力足够但带宽不足，会发生什么？",
+          "expect": "GPU 利用率低、算力闲置，实际速度远低于理论峰值。这就是推理场景的常态——所以要批处理、量化、投机解码来提升带宽效率"
+        }
+      ]
+    },
+    {
+      "id": "t-memory-bandwidth",
+      "cn": "显存带宽",
+      "en": "memory bandwidth",
+      "def": "每秒能从显存读出多少字节。通常单位 GB/s 或 TB/s。",
+      "why": "它是推理的真正瓶颈。理解它就能算出「这个模型理论上最快能生成多少 token/s」。",
+      "depends": [
+        "t-vram",
+        "t-training-vs-inference"
+      ],
+      "contrasts": [
+        "t-flops",
+        "t-tokens-per-sec"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "一个 70B 模型（fp16，140GB）跑在带宽 2TB/s 的卡上，理论最快 tokens/s 是多少？",
+          "expect": "约 2000/140 ≈ 14 tokens/s。这是单请求的物理上限（每 token 必须读完全部权重）。要更快只能量化（减少字节）或增大 batch（摊薄）"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "为什么一张算力翻倍但带宽不变的卡，对推理提升有限？",
+          "expect": "推理 decode 阶段是带宽受限，算力本来就大量闲置；算力翻倍无法缩短「读权重」的时间，所以提升有限。只有批处理足够大时才转为算力受限"
+        }
+      ]
+    }
+  ]
+}

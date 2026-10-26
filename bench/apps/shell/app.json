@@ -1,0 +1,12 @@
+{
+  "id": "shell",
+  "name": "外壳",
+  "icon": "shell",
+  "tagline": "平台层：路由分发、应用注册表、主题与模式注入。",
+  "color": "#8b95a8",
+  "order": 10,
+  "version": "1.0.0",
+  "layer": "platform",
+  "entry": "index.html",
+  "requires": []
+}

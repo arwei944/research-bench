@@ -1,0 +1,14 @@
+{
+  "id": "mode",
+  "name": "模式",
+  "icon": "mode",
+  "tagline": "专家/小白模式：同一份内容按使用者水平决定解释深度与参数可见性。",
+  "color": "#5b93f8",
+  "order": 10,
+  "version": "1.0.0",
+  "layer": "core",
+  "entry": "index.html",
+  "requires": [
+    "shell"
+  ]
+}

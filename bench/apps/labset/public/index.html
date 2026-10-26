@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>实验器</title>
+<style>
+  :root,.theme-dark{
+    --bg:#0b0d12;--panel:#12151d;--elev:#181c26;--line:#232936;--line2:#333c4d;
+    --fg:#e8ecf4;--fg2:#a2adc0;--fg3:#697586;
+    --ac:#f472b6;--ac2:#3d1f33;--ok:#3ddc97;--warn:#fbbf24;--err:#fb7185;
+    --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  [data-theme="light"]{
+    --bg:#f6f7f9;--panel:#fff;--elev:#f0f2f5;--line:#e2e6ec;--line2:#c8cfda;
+    --fg:#161b22;--fg2:#4c5866;--fg3:#7b8794;
+    --ac:#db2777;--ac2:#fce7f3;--ok:#059669;--warn:#b45309;--err:#dc2626;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  button,input,select{font:inherit;color:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 70px}
+  h1{font-size:19px;margin:0 0 5px}
+  .sub{font-size:12.5px;color:var(--fg3);line-height:1.7;max-width:720px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card>h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--fg3);
+    margin:0 0 13px;font-weight:700;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .card>h2 .r{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500}
+
+  .btn{background:var(--ac);color:#fff;border:none;border-radius:8px;padding:8px 15px;
+    cursor:pointer;font-size:12.5px;font-weight:600}
+  .btn:hover{opacity:.88}
+  .btn.ghost{background:var(--elev);border:1px solid var(--line);color:var(--fg2)}
+  .btn.sm{padding:4px 10px;font-size:11.5px}
+  .btn:disabled{opacity:.45;cursor:default}
+
+  select,input[type=number]{background:var(--bg);border:1px solid var(--line);
+    border-radius:8px;padding:7px 10px;font-size:12.5px}
+
+  /* ---- 指标 ---- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:9px}
+  .kpi{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .kpi .v{font-size:19px;font-weight:700;font-family:var(--mono);line-height:1.2}
+  .kpi .k{font-size:10.5px;color:var(--fg3);margin-top:1px}
+
+  /* ---- 配置对比柱图 ---- */
+  .bar-row{display:grid;grid-template-columns:150px 1fr 90px 78px;gap:11px;align-items:center;
+    padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .bar-row:last-child{border-bottom:none}
+  .bar-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-track{height:22px;background:var(--elev);border-radius:5px;overflow:hidden;position:relative}
+  .bar-fill{height:100%;border-radius:5px;transition:width .4s;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 80%,transparent),var(--ac))}
+  .bar-fill.base{background:linear-gradient(90deg,color-mix(in srgb,var(--fg3) 50%,transparent),var(--fg3))}
+  .bar-fill.bad{background:linear-gradient(90deg,color-mix(in srgb,var(--err) 70%,transparent),var(--err))}
+  .bar-row .pct{font-family:var(--mono);font-weight:700;text-align:right}
+  .bar-row .ms{font-family:var(--mono);font-size:11px;color:var(--fg3);text-align:right}
+  .bar-row .delta{font-family:var(--mono);font-size:11px;text-align:right;font-weight:700}
+
+  /* ---- 任务条 ---- */
+  .task-row{display:grid;grid-template-columns:230px 1fr 70px;gap:11px;align-items:center;
+    padding:6px 0;font-size:12px}
+  .task-row .id{font-family:var(--mono);font-size:11.5px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;color:var(--fg2)}
+  .task-row .tr{height:15px;background:var(--elev);border-radius:4px;overflow:hidden}
+  .task-row .tf{height:100%;border-radius:4px}
+  .task-row .tp{font-family:var(--mono);font-size:11px;text-align:right;color:var(--fg2)}
+  .kind{display:inline-block;font-size:9.5px;font-weight:700;padding:0 5px;border-radius:3px;
+    margin-right:5px;font-family:var(--mono)}
+  .kind.A{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+  .kind.B{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+  .kind.C{background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac)}
+  .kind.D{background:color-mix(in srgb,#a78bfa 22%,transparent);color:#a78bfa}
+  .kind.E{background:color-mix(in srgb,#f472b6 22%,transparent);color:#f472b6}
+  .kind.F{background:color-mix(in srgb,#22d3ee 22%,transparent);color:#22d3ee}
+  .kind.G{background:color-mix(in srgb,#fbbf24 22%,transparent);color:#fbbf24}
+
+  /* ---- 明细表 ---- */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg3);font-weight:700}
+  td.mono{font-family:var(--mono);font-size:11px}
+  .pass{color:var(--ok);font-weight:700}
+  .fail{color:var(--err);font-weight:700}
+  .err{color:var(--warn);font-weight:700}
+
+  details{margin-top:8px}
+  details summary{cursor:pointer;font-size:12px;color:var(--fg2);padding:5px 0}
+  details summary:hover{color:var(--fg)}
+  details pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:11px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.65;
+    max-height:300px;margin:7px 0 0;white-space:pre-wrap;word-break:break-word}
+
+  .flash{font-size:12px;padding:9px 12px;border-radius:8px;margin:10px 0}
+  .flash.err{background:color-mix(in srgb,var(--err) 13%,transparent);color:var(--err);
+    border:1px solid color-mix(in srgb,var(--err) 32%,transparent)}
+  .flash.ok{background:color-mix(in srgb,var(--ok) 13%,transparent);color:var(--ok);
+    border:1px solid color-mix(in srgb,var(--ok) 32%,transparent)}
+  .flash.warn{background:color-mix(in srgb,var(--warn) 13%,transparent);color:var(--warn);
+    border:1px solid color-mix(in srgb,var(--warn) 32%,transparent)}
+
+  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1 1 200px;min-width:0}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line2);
+    border-top-color:var(--ac);border-radius:50%;animation:sp .65s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .empty{color:var(--fg3);font-size:12.5px;padding:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚗ 实验器</h1>
+  <p class="sub">
+    测「实际产出 ÷ 名义能力」。所有任务都有**可执行验证器**，判分不靠人看。
+    配置之间只改一个因子，才能归因。每次运行都留档，可追溯、可复现。
+  </p>
+
+  <div class="card">
+    <h2>运行 <span class="r" id="run-hint"></span></h2>
+    <div class="row">
+      <select id="sel-run" style="min-width:230px"></select>
+      <button class="btn ghost sm" id="btn-load">载入</button>
+      <button class="btn ghost sm" id="btn-selftest">验证器自检</button>
+      <button class="btn ghost sm" id="btn-export">导出证据</button>
+      <div class="grow"></div>
+      <select id="sel-scope" style="min-width:250px"></select>
+      <button class="btn" id="btn-new">跑新实验</button>
+    </div>
+    <div id="run-msg"></div>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<script src="/static/kit.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = Bench.kit.esc;
+const pct = Bench.kit.pct;
+const api = Bench.api("labset");
+const msg = (el, kind, t) => { el.innerHTML = t ? `<div class="flash ${kind}">${esc(t)}</div>` : ""; };
+
+let state = { runs: [], current: null, data: null, tasks: [], configs: [], scopes: [] };
+
+// ── 实验范围预设（避免“一键跑全部”变成 300 次调用）──
+function buildScopes(tasks, configs) {
+  const ids = (k) => tasks.filter((t) => k.includes(t.kind)).map((t) => t.id);
+  const all = tasks.map((t) => t.id);
+  const fg = ids(["F", "G"]);
+  const de = ids(["D", "E", "F", "G"]);
+  const quickConfigs = ["baseline", "scaffold"];
+  const mk = (label, tks, cfs, reps) => ({
+    label,
+    tasks: tks,
+    configs: cfs,
+    repeats: reps,
+    calls: tks.length * cfs.length * reps,
+  });
+  return [
+    mk(`新增 F/G 类 · 2 配置 · 2 重复`, fg, quickConfigs, 2),
+    mk(`困难题 D/E/F/G · 2 配置 · 2 重复`, de, quickConfigs, 2),
+    mk(`校准专项 · F/G 类 · baseline+calibration · 2 重复`, fg, ["baseline", "calibration"], 2),
+    mk(`全部 ${all.length} 题 · 6 配置 · 1 重复`, all, configs.map((c) => c.id), 1),
+  ];
+}
+
+async function loadMeta() {
+  try {
+    const [t, c] = await Promise.all([api("/tasks"), api("/configs")]);
+    state.tasks = t.tasks || [];
+    state.configs = c.configs || [];
+    state.scopes = buildScopes(state.tasks, state.configs);
+    $("sel-scope").innerHTML = state.scopes
+      .map((s, i) => `<option value="${i}">${esc(s.label)} · 约 ${s.calls} 次调用</option>`)
+      .join("");
+  } catch { /* 元数据失败不影响看历史 */ }
+}
+
+// ── 主题 / 模式由 kit 统一处理 ──
+Bench.kit.theme.sync();
+
+// ── 运行列表 ──
+async function loadRuns() {
+  const d = await api("/runs");
+  state.runs = d.runs || [];
+  const sel = $("sel-run");
+  sel.innerHTML = state.runs.length
+    ? state.runs.map((r) => `<option value="${esc(r.runId)}">${esc(r.runId)} · ${r.records} 次</option>`).join("")
+    : `<option value="">（还没有运行）</option>`;
+  $("run-hint").textContent = `${state.runs.length} 次历史运行`;
+  if (state.runs.length && !state.current) {
+    await loadRun(state.runs[0].runId);
+  }
+}
+
+async function loadRun(runId) {
+  if (!runId) return;
+  $("content").innerHTML = `<div class="card"><span class="spin"></span> 载入中…</div>`;
+  try {
+    const d = await api("/runs/" + encodeURIComponent(runId));
+    state.current = runId;
+    state.data = d;
+    render();
+    $("sel-run").value = runId;
+  } catch (e) {
+    $("content").innerHTML = `<div class="card"><div class="flash err">${esc(e.message)}</div></div>`;
+  }
+}
+
+// ── 渲染 ──
+function render() {
+  const d = state.data;
+  if (!d) return;
+  const s = d.summary;
+  const base = s.configStats.find((c) => c.config === "baseline");
+  const best = [...s.configStats].sort((a, b) => b.passRate - a.passRate)[0];
+  const worst = [...s.configStats].sort((a, b) => a.passRate - b.passRate)[0];
+  const saturated = s.taskStats.filter((t) => t.passRate >= 0.99).length;
+
+  const warnCeil = best && best.passRate >= 0.99
+    ? `<div class="flash warn">⚠️ 天花板警告：最高配置已达 ${pct(best.passRate)}，任务过简单，无法区分配置差异。这批数据只能说明「在简单任务上脚手架无效」，不能推广到困难任务。</div>`
+    : "";
+
+  let html = "";
+
+  // KPI
+  const rel = s.reliability || { tasksTotal: 0, tasksFullyReliable: 0, ratio: 0 };
+  const fb = s.failureBreakdown || { timeouts: 0, errors: 0, wrongAnswers: 0 };
+  const tb = s.turnBreakdown || { singleTurn: 0, multiTurn: 0, singleTurnPassRate: null, multiTurnPassRate: null };
+  const cliffTasks = s.taskStats.filter((t) => t.zone === "cliff");
+
+  html += `<div class="card"><h2>总览 <span class="r">${esc(d.runId)}</span></h2>
+    <div class="kpis">
+      <div class="kpi"><div class="v">${d.records.length}</div><div class="k">调用次数</div></div>
+      <div class="kpi"><div class="v" style="color:var(--ok)">${pct(s.overallPassRate)}</div><div class="k">pass@1（能算对一次）</div></div>
+      <div class="kpi"><div class="v" style="color:${rel.ratio >= 0.99 ? "var(--ok)" : rel.ratio >= 0.6 ? "var(--warn)" : "var(--err)"}">${rel.tasksFullyReliable}/${rel.tasksTotal}</div><div class="k">稳定可交付（每次都过）</div></div>
+      <div class="kpi"><div class="v" style="color:var(--err)">${fb.timeouts}</div><div class="k">超时失败</div></div>
+      <div class="kpi"><div class="v" style="color:var(--warn)">${fb.wrongAnswers}</div><div class="k">算错</div></div>
+      <div class="kpi"><div class="v" style="color:var(--err)">${cliffTasks.length}</div><div class="k">悬崖区任务</div></div>
+    </div>
+    ${rel.ratio < 1 ? `<div class="flash warn">⚠️ <b>可靠性缺口</b>：pass@1 是 ${pct(s.overallPassRate)}，但只有 ${rel.tasksFullyReliable}/${rel.tasksTotal} 个任务做到了「每次都过」。
+      ${fb.timeouts > 0 ? `其中 ${fb.timeouts} 次失败是<b>超时</b>而非算错——说明任务太长，不是模型不会。` : ""}
+      「能算对一次」不等于「能稳定交付」。</div>` : ""}
+    ${warnCeil}
+    ${cliffTasks.length ? `<div class="flash err">🔥 <b>悬崖区警示</b>：${cliffTasks.map((t) => `\`${t.task}\`（最慢 ${Math.round(t.maxMs / 1000)}s）`).join("、")}
+      已接近 120 秒超时线。这类任务应该<b>切分</b>而不是重试。</div>` : ""}
+  </div>`;
+
+  // 校准（只在有 calibration 配置时才有数据）
+  const cal = s.calibration;
+  if (cal && cal.n) {
+    const calCol = cal.ece == null ? "var(--fg3)" : cal.ece < 0.05 ? "var(--ok)" : cal.ece < 0.15 ? "var(--warn)" : "var(--err)";
+    html += `<div class="card"><h2>校准 <span class="r">知道自己不知道吗 · ECE</span></h2>
+      <div class="kpis">
+        <div class="kpi"><div class="v" style="color:${calCol}">${cal.ece}</div><div class="k">ECE（越小越好，&lt;0.05 良好）</div></div>
+        <div class="kpi"><div class="v">${cal.brier}</div><div class="k">Brier 分数</div></div>
+        <div class="kpi"><div class="v">${pct(cal.avgConfidence, 0)}</div><div class="k">平均自评置信度</div></div>
+        <div class="kpi"><div class="v">${pct(cal.accuracy, 0)}</div><div class="k">实际准确率</div></div>
+        <div class="kpi"><div class="v">${cal.n}</div><div class="k">带置信度的样本</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--fg3);margin-top:10px">
+        ${cal.avgConfidence > cal.accuracy
+          ? `⚠️ <b>整体过自信</b>：平均自报 ${pct(cal.avgConfidence, 0)}，实际只有 ${pct(cal.accuracy, 0)} 对。差额 ${pct(cal.avgConfidence - cal.accuracy, 1)}。`
+          : cal.avgConfidence < cal.accuracy
+            ? `ℹ️ <b>整体欠自信</b>：平均自报 ${pct(cal.avgConfidence, 0)}，实际 ${pct(cal.accuracy, 0)} 对。`
+            : `✓ 平均置信度与实际准确率一致。`}
+      </div>`;
+    if (cal.bins && cal.bins.length) {
+      html += `<table style="margin-top:12px"><thead><tr><th>置信区间</th><th>样本</th><th>平均自评</th><th>实际准确率</th><th>差距</th><th>偏向</th></tr></thead><tbody>`;
+      for (const b of cal.bins) {
+        const bc = b.bias === "过自信" ? "var(--err)" : b.bias === "欠自信" ? "var(--warn)" : "var(--ok)";
+        html += `<tr><td class="mono">${esc(b.range)}</td><td class="mono">${b.n}</td>
+          <td class="mono">${pct(b.avgConf, 0)}</td><td class="mono">${pct(b.acc, 0)}</td>
+          <td class="mono">${(b.gap * 100).toFixed(1)}pp</td>
+          <td style="color:${bc};font-weight:700">${esc(b.bias)}</td></tr>`;
+      }
+      html += `</tbody></table>`;
+    }
+    html += `<div style="font-size:11px;color:var(--fg3);margin-top:9px">
+      读数方式：若「80–100%」那行的实际准确率明显低于 80%，说明模型在高置信时仍然会错——这类结论必须人工复核。
+      ${cal.coverage?.blindSpot ? `<br><b style="color:var(--warn)">⚠️ 盲区</b>：${esc(cal.coverage.blindSpot)}。` : ""}
+      ${cal.caveat ? `<br><b style="color:var(--warn)">⚠️ 局限</b>：${esc(cal.caveat)}。` : ""}
+      </div></div>`;
+  } else if (state.configs.some((c) => c.id === "calibration")) {
+    html += `<div class="card"><h2>校准 <span class="r">尚未测量</span></h2>
+      <div class="flash warn">这轮实验没有跑 <code>calibration</code> 配置，所以没有置信度数据。
+      跑一轮含该配置的实验即可得到 ECE。</div></div>`;
+  }
+
+  // 配置对比
+  html += `<div class="card"><h2>配置对比 <span class="r">同一模型，只改一个因子</span></h2>`;
+  for (const c of s.configStats) {
+    const delta = s.deltas.find((x) => x.config === c.config);
+    const isBase = c.config === "baseline";
+    const cls = isBase ? "base" : c.passRate < (base?.passRate ?? 1) ? "bad" : "";
+    const dstr = delta
+      ? (delta.deltaPassRate === 0 ? "±0"
+          : `<span style="color:${delta.deltaPassRate > 0 ? "var(--ok)" : "var(--err)"}">${delta.deltaPassRate > 0 ? "+" : ""}${(delta.deltaPassRate * 100).toFixed(1)}pp</span>`)
+      : `<span style="color:var(--fg3)">基线</span>`;
+    html += `<div class="bar-row">
+      <div class="nm" title="${esc(c.name)}">${esc(c.name)}</div>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(1, c.passRate * 100)}%"></div></div>
+      <div class="pct">${pct(c.passRate)}</div>
+      <div class="delta">${dstr}</div>
+    </div>`;
+  }
+  html += `<div style="font-size:11px;color:var(--fg3);margin-top:9px">
+    柱长 = pass@1。灰色=基线，粉色=与基线持平或更好，红色=比基线差。</div></div>`;
+
+  // 任务可靠性（核心视图）
+  html += `<div class="card"><h2>任务可靠性 <span class="r">pass@1 vs 每次都过</span></h2>`;
+  const tasks = s.taskStats.slice().sort((a, b) => a.passRate - b.passRate);
+  const ZONE_LABEL = { safe: "安全", warn: "警戒", cliff: "悬崖", unknown: "?" };
+  for (const t of tasks) {
+    const col = t.passRate >= 0.99 ? "var(--fg3)" : t.passRate >= 0.6 ? "var(--warn)" : "var(--err)";
+    const reliable = t.passK === 1;
+    const zoneCol = t.zone === "cliff" ? "var(--err)" : t.zone === "warn" ? "var(--warn)" : "var(--ok)";
+    const turnsBadge = (t.turns ?? 1) > 1
+      ? `<span style="color:#22d3ee;font-weight:700">${t.turns} 轮</span>`
+      : `<span style="color:var(--fg3)">单轮</span>`;
+    const failTurnHint = (t.failedTurns || []).length
+      ? `<span style="color:var(--err)">（第 ${[...new Set(t.failedTurns)].join("/")} 轮挂掉）</span>`
+      : "";
+    html += `<div class="task-row" style="grid-template-columns:230px 1fr 74px 74px 90px">
+      <div class="id"><span class="kind ${t.kind}">${t.kind}</span>${esc(t.task)}</div>
+      <div class="tr"><div class="tf" style="width:${Math.max(1, t.passRate * 100)}%;background:${col}"></div></div>
+      <div class="tp">${pct(t.passRate)}</div>
+      <div class="tp" style="color:${reliable ? "var(--ok)" : "var(--err)"};font-weight:700">${reliable ? "✓ 稳定" : "✗ " + t.pass + "/" + t.runs}</div>
+      <div class="tp" style="color:${zoneCol};font-size:10px">${ZONE_LABEL[t.zone] || ""} ${t.maxMs ? Math.round(t.maxMs / 1000) + "s" : ""}</div>
+      <div class="tp" style="grid-column:1/-1;text-align:left;font-size:10.5px;padding-left:2px">${turnsBadge}${failTurnHint}</div>
+    </div>`;
+  }
+  html += `<div style="font-size:11px;color:var(--fg3);margin-top:9px">
+    第 3 列 = pass@1（能算对一次）· 第 4 列 = 是否每次都过 · 第 5 列 = 耗时所属区间（安全&lt;30s / 警戒 30–80s / 悬崖&gt;80s）<br>
+    <b>失败分类</b>：超时 ${fb.timeouts} · 算错 ${fb.wrongAnswers} · 其它错误 ${fb.errors}
+    ${fb.timeouts > 0 && fb.wrongAnswers === 0 ? "—— 失败全是超时，说明瓶颈是任务长度而非推理能力" : ""}
+    ${tb.multiTurn ? `<br><b>单轮 vs 多轮</b>：单轮 ${pct(tb.singleTurnPassRate)}（${tb.singleTurn} 次）· 多轮 ${pct(tb.multiTurnPassRate)}（${tb.multiTurn} 次）—— 多轮掉得越多，说明上下文一致性越是瓶颈` : ""}
+  </div></div>`;
+
+  // 失败样本
+  const fails = d.records.filter((r) => !r.pass && r.ok);
+  if (fails.length) {
+    html += `<div class="card"><h2>失败样本 <span class="r">${fails.length} 条 · 最有信息量</span></h2>`;
+    const byTask = {};
+    for (const f of fails) (byTask[f.task] ??= []).push(f);
+    for (const [task, list] of Object.entries(byTask)) {
+      html += `<details><summary><span class="fail">✗</span> ${esc(task)} · ${list.length} 次失败
+        （配置：${[...new Set(list.map((x) => x.config))].map(esc).join(", ")}）</summary>`;
+      for (const f of list.slice(0, 3)) {
+        html += `<div style="font-size:11.5px;color:var(--fg3);margin-top:7px">
+          配置 <b>${esc(f.config)}</b> · 判分：${esc(f.reason)}</div>
+          <pre>${esc((f.raw || "").trim().slice(0, 1200))}</pre>`;
+      }
+      html += `</details>`;
+    }
+    html += `</div>`;
+  }
+
+  // 全量明细
+  html += `<div class="card"><h2>全量明细 <span class="r">可追溯到每一次调用</span></h2>
+    <details><summary>展开 ${d.records.length} 条记录</summary>
+    <table><thead><tr><th>任务</th><th>配置</th><th>#</th><th>结果</th><th>判分依据</th><th>耗时</th></tr></thead><tbody>`;
+  for (const r of d.records) {
+    const v = r.pass ? '<span class="pass">✅</span>' : r.ok ? '<span class="fail">❌</span>' : '<span class="err">⚠️</span>';
+    html += `<tr><td class="mono">${esc(r.task)}${(r.turns ?? 1) > 1 ? ` <span style="color:#22d3ee">${r.turns}轮</span>` : ""}</td><td class="mono">${esc(r.config)}</td>
+      <td class="mono">${r.rep}</td><td>${v}</td>
+      <td class="mono" style="color:var(--fg3)">${esc((r.reason || r.error || "").slice(0, 60))}</td>
+      <td class="mono">${r.ms}ms</td></tr>`;
+  }
+  html += `</tbody></table></details></div>`;
+
+  // 复现
+  html += `<div class="card"><h2>如何复现</h2>
+    <pre style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.7">curl -s http://127.0.0.1:7800/api/labset/selftest   # 1) 先自检
+curl -s -X POST http://127.0.0.1:7800/api/labset/run \\
+  -H "Content-Type: application/json" \\
+  -d '{"tasks":${JSON.stringify([...new Set(d.records.map((r) => r.task))])},"configs":${JSON.stringify([...new Set(d.records.map((r) => r.config))])},"repeats":${Math.max(...d.records.map((r) => r.rep || 1))}}'</pre>
+    <div style="font-size:11.5px;color:var(--fg3);margin-top:8px">
+      证据文件：<code>data/evidence/${esc(d.runId)}.md</code>（人读）·
+      <code>.json</code>（机读，含全部原始输出）
+    </div></div>`;
+
+  $("content").innerHTML = html;
+}
+
+// ── 事件 ──
+$("btn-load").onclick = () => loadRun($("sel-run").value);
+
+$("btn-selftest").onclick = async () => {
+  const el = $("run-msg");
+  msg(el, "ok", "自检中…");
+  try {
+    const d = await api("/selftest");
+    if (d.ok) {
+      msg(el, "ok", `验证器自检通过 ${d.passed}/${d.total}：标准答案全部通过，已知错答全部被拒。`);
+    } else {
+      msg(el, "err", `自检失败 ${d.bad} 项：` + d.results.filter((r) => !r.ok).map((r) => r.task).join(", "));
+    }
+  } catch (e) { msg(el, "err", e.message); }
+};
+
+$("btn-export").onclick = async () => {
+  const el = $("run-msg");
+  if (!state.current) return msg(el, "err", "先载入一次运行");
+  msg(el, "ok", "导出中…");
+  try {
+    const d = await api("/export", { method: "POST", body: JSON.stringify({ runId: state.current }) });
+    msg(el, "ok", `已导出：${d.markdown}（人读）+ .json（机读）`);
+  } catch (e) { msg(el, "err", "导出失败：" + e.message); }
+};
+
+$("btn-new").onclick = async () => {
+  const el = $("run-msg");
+  const sc = state.scopes[Number($("sel-scope").value)];
+  if (!sc) return msg(el, "err", "范围未就绪，请稍候再试");
+  const est = Math.max(1, Math.round(sc.calls * 0.15));
+  if (!confirm(`跑一轮实验？\n\n${sc.label}\n共 ${sc.calls} 次调用，预计 ${est} 分钟。`)) return;
+  msg(el, "ok", `启动中…（${sc.calls} 次调用）`);
+  try {
+    const d = await api("/run", {
+      method: "POST",
+      body: JSON.stringify({ tasks: sc.tasks, configs: sc.configs, repeats: sc.repeats }),
+    });
+    msg(el, "ok", `完成：${d.total} 次调用`);
+    await loadRuns();
+    await loadRun(d.runId);
+  } catch (e) { msg(el, "err", "失败：" + e.message); }
+};
+
+// ── 启动 ──
+(async () => {
+  try {
+    const t = await fetch("/api/_platform/theme").then((r) => r.json());
+    document.documentElement.dataset.theme = t.mode === "light" ? "light" : "dark";
+  } catch {}
+  try { await loadMeta(); } catch {}
+  try { await loadRuns(); } catch (e) { $("content").innerHTML = `<div class="card"><div class="flash err">${esc(e.message)}</div></div>`; }
+})();
+</script>
+</body>
+</html>

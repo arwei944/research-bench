@@ -1,0 +1,31 @@
+{
+  "id": "nb-day3",
+  "title": "第 3 天 · 形状比条件更本质",
+  "note": "目标：把「if/while」翻译成「match/递归」，并理解 fold 的通用性。",
+  "cells": [
+    {
+      "lang": "js",
+      "title": "① 布尔只是两个构造子",
+      "code": "// bool = True | False  ——两个构造子\nconst True = { tag: 'True' };\nconst False = { tag: 'False' };\n\n// 「match」布尔 = 用这个类型定义的唯一消去方式\nconst matchBool = (b, onTrue, onFalse) =>\n  b.tag === 'True' ? onTrue() : onFalse();\n\n// if 就是它\nconst IF = (b, t, f) => matchBool(b, () => t, () => f);\n\n// 现在你能写一个「三值」类型，if 就无能为力了\nconst Result = tag => v => ({ tag, v });\nconst matchResult = (r, onOk, onErr, onPending) =>\n  ({ Ok: onOk, Err: onErr, Pending: onPending })[r.tag](r.v);\n\nmatchResult(Result('Pending')(null),\n  v => 'ok ' + v, v => 'err ' + v, () => 'pending…')",
+      "comment": "注意：Result 有三个构造子，if 写不出来。这就是「if 是退化版 match」的直接证据。"
+    },
+    {
+      "lang": "js",
+      "title": "② while 就是尾递归",
+      "code": "// while (i < n) { acc += i; i++ }\nconst sumLoop = n => {\n  const go = (i, acc) => i >= n ? acc : go(i + 1, acc + i);\n  return go(0, 0);\n};\nsumLoop(10)",
+      "comment": "「循环变量」就是递归参数。没有任何本质区别——除了 tail call 优化（JS 引擎大多不做，所以大 n 会爆栈）。"
+    },
+    {
+      "lang": "js",
+      "title": "③ fold 能表达一切列表操作",
+      "code": "const fold = xs => init => f => xs.reduce(f, init);\n\nconst map     = xs => g => fold(xs)([])((a, x) => [...a, g(x)]);\nconst filter  = xs => p => fold(xs)([])((a, x) => p(x) ? [...a, x] : a);\nconst length  = xs => fold(xs)(0)((n) => n + 1);\nconst reverse = xs => fold(xs)([])((a, x) => [x, ...a]);\nconst concat  = xss => fold(xss)([])((a, x) => [...a, ...x]);\n\nconst xs = [1,2,3,4];\n({\n  map: map(xs)(x => x * 2),\n  filter: filter(xs)(x => x % 2 === 0),\n  length: length(xs),\n  reverse: reverse(xs),\n  concat: concat([[1],[2,3],[4]])\n})",
+      "comment": "五个函数，一个 fold。这不是巧合：fold 是归纳类型（列表）的**唯一**通用消去规则。"
+    },
+    {
+      "lang": "js",
+      "title": "④ 全序被破坏后会发生什么",
+      "code": "const rps = (a, b) => {\n  if (a === b) return 0;\n  const beats = { rock: 'scissors', scissors: 'paper', paper: 'rock' };\n  return beats[a] === b ? -1 : 1;\n};\n\n// 同一个集合，不同初始顺序 → 不同结果\n['rock','paper','scissors'].sort(rps)\n['paper','scissors','rock'].sort(rps)\n['scissors','rock','paper'].sort(rps)",
+      "comment": "三种输入顺序得到三种「排序结果」。因为 rps 不满足传递性（石头胜剪刀、剪刀胜布、布胜石头），它不是全序，sort 的行为因此未定义。"
+    }
+  ]
+}

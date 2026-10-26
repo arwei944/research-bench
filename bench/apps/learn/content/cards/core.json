@@ -1,0 +1,177 @@
+[
+  {
+    "id": "c-lambda-syntax",
+    "node": "n-lambda",
+    "tags": ["λ演算", "语法"],
+    "question": "λ 演算的三个语法成分是什么？",
+    "answer": "变量 x、抽象 λx.M、应用 M N。只有这三样，加上 β 归约规则，就图灵完备。"
+  },
+  {
+    "id": "c-lambda-vs-tm",
+    "node": "n-lambda",
+    "tags": ["λ演算", "计算模型"],
+    "question": "λ 演算和图灵机是什么关系？",
+    "answer": "等价。Church 1936 证明两者能表达同一类可计算函数（Church–Turing 论题）。这是「计算」这个概念不依赖具体机器的证据。"
+  },
+  {
+    "id": "c-capture",
+    "node": "n-beta",
+    "tags": ["β归约", "变量捕获"],
+    "question": "为什么 (λx.λy.x) y 不能直接替换成 λy.y？",
+    "answer": "因为外层的自由变量 y 会被内层的 λy 捕获，语义从「返回外部 y」变成「返回参数」。必须先 α 重命名内层 y 为 y$1，再代入得到 λy$1.y。"
+  },
+  {
+    "id": "c-scope-why",
+    "node": "n-beta",
+    "tags": ["作用域"],
+    "question": "「作用域」这个概念存在的根本理由是什么？",
+    "answer": "防止变量捕获。名字只是给人看的，真正重要的是「哪个 λ 绑定了哪个名字的使用」。de Bruijn 索引把名字彻底扔掉，只留绑定层级，证明名字不是本质。"
+  },
+  {
+    "id": "c-strategy",
+    "node": "n-strategy",
+    "tags": ["求值策略"],
+    "question": "正规序（normal order）和应用序（call-by-value）的关键差别？",
+    "answer": "正规序最左最外，保证「若范式存在则必求得」；应用序先求参数，可能因参数不终止而整个表达式不终止。经典反例：(λx.y) Ω —— 正规序得 y，应用序发散。"
+  },
+  {
+    "id": "c-omega",
+    "node": "n-strategy",
+    "tags": ["停机", "Ω"],
+    "question": "Ω 是什么？它说明了什么？",
+    "answer": "Ω = (λx.x x)(λx.x x)，一步归约后仍是自己，没有范式。它说明不终止是 λ 演算的内在性质（停机问题的体现），任何图灵完备系统都有。"
+  },
+  {
+    "id": "c-sk",
+    "node": "n-sk",
+    "tags": ["SK", "组合子"],
+    "question": "SK 组合子的两条规则？",
+    "answer": "K x y = x（返回第一个、丢弃第二个）；S x y z = x z (y z)。只有这两个加应用，就能表达所有可计算函数，无需 λ 和变量。"
+  },
+  {
+    "id": "c-sk-significance",
+    "node": "n-sk",
+    "tags": ["SK", "本质"],
+    "question": "SK 完备性证明了什么哲学/工程结论？",
+    "answer": "变量绑定不是计算的本质，只是方便。工程上它是无点风格和函数式编译器中间表示的基础（超组合子）。"
+  },
+  {
+    "id": "c-church-num",
+    "node": "n-church",
+    "tags": ["Church编码"],
+    "question": "Church 数里 3 怎么表示？",
+    "answer": "3 = λf.λx. f (f (f x))，即「把操作 f 重复 3 次」。数字不是符号，而是一段行为。"
+  },
+  {
+    "id": "c-church-bool",
+    "node": "n-church",
+    "tags": ["Church编码", "布尔"],
+    "question": "Church 布尔 TRUE / FALSE 是什么？为什么这样定义就能做 if？",
+    "answer": "TRUE = λt.λf.t，FALSE = λt.λf.f。「布尔」就是「二选一的选择器」，所以 TRUE 选第一个，FALSE 选第二个。IF = λc.λt.λf. c t f，直接应用即可。"
+  },
+  {
+    "id": "c-church-data-as-behavior",
+    "node": "n-church",
+    "tags": ["Church编码", "核心洞察"],
+    "question": "Church 编码最深刻的结论是什么？",
+    "answer": "数据即行为（data as behavior）。任何数据结构都可以用「它接受什么操作」来表达。这推出去函数化（defunctionalization）和 CPS 变换，也解释了为什么 JSON/protobuf 只是选了一套原语来编码一切。"
+  },
+  {
+    "id": "c-y",
+    "node": "n-y",
+    "tags": ["不动点", "递归"],
+    "question": "Y 组合子的等式？为什么它能实现递归？",
+    "answer": "Y f = f (Y f)。它把 f 作用到「自己的不动点」上，所以无需给函数起名字就能自指。递归 = 求最小不动点（Kleene 定理）。"
+  },
+  {
+    "id": "c-y-vs-z",
+    "node": "n-y",
+    "tags": ["不动点", "求值策略"],
+    "question": "为什么应用序需要 Z 组合子而不是 Y？",
+    "answer": "应用序下 Y f 会立即展开导致无限递归（Y f = f(Y f) 先算参数）。Z 加了 η 展开 λx.…x（称为 Z 或 call-by-value Y），把展开推迟到收到参数时。"
+  },
+  {
+    "id": "c-match-vs-if",
+    "node": "n-adt",
+    "tags": ["匹配", "控制流"],
+    "question": "为什么说 if 是退化版的 match，而不是反过来？",
+    "answer": "bool 只是「两个构造子」的和类型：bool = true | false。if 就是对它做 match 的语法糖。有三构造子的类型（如 Result = Ok | Err | Pending）就无法用 if 表达——match 才是本质。"
+  },
+  {
+    "id": "c-while-is-recursion",
+    "node": "n-adt",
+    "tags": ["控制流", "递归"],
+    "question": "while 循环在「最小构成」视角下是什么？",
+    "answer": "是对「自然数或列表」的递归（fold）。while (cond) { body } ≡ 一个带累积参数的尾递归函数。所以 while 不是基础构造。"
+  },
+  {
+    "id": "c-fold-universal",
+    "node": "n-recursion-scheme",
+    "tags": ["fold", "递归方案"],
+    "question": "为什么说 fold 是归纳类型的通用消去规则？",
+    "answer": "因为归纳类型只有「构造」和「消去」两种操作。fold（catamorphism）就是把所有构造子替换成对应函数、一次性消去整个结构。map/filter/length/sum 全都能由 fold 表达，所以 fold 是「拆列表」的唯一本质方式。"
+  },
+  {
+    "id": "c-total-order",
+    "node": "n-total",
+    "tags": ["全序", "bug"],
+    "question": "自定义比较器必须满足哪四条性质？",
+    "answer": "自反（a≈a）、反对称（a≺b 则非 b≺a）、传递（a≺b 且 b≺c 则 a≺c）、完全（任意两元素可比）。违反任一，sort 行为未定义。"
+  },
+  {
+    "id": "c-partial-vs-total",
+    "node": "n-total",
+    "tags": ["偏序", "拓扑排序"],
+    "question": "偏序和全序的差别？各自对应什么算法？",
+    "answer": "偏序允许「不可比」（如依赖关系里两个任务互不依赖）；全序要求任意两元素可比。偏序 → 拓扑排序；全序 → 普通排序。"
+  },
+  {
+    "id": "c-curry-howard",
+    "node": "n-curry-howard",
+    "tags": ["Curry-Howard", "类型"],
+    "question": "Curry–Howard 同构的四组对应是什么？",
+    "answer": "类型↔命题，程序↔证明；A→B ↔ A 蕴含 B；A×B ↔ A 且 B；A+B ↔ A 或 B；Never ↔ 假（无法构造值）。"
+  },
+  {
+    "id": "c-ch-why-matters",
+    "node": "n-curry-howard",
+    "tags": ["Curry-Howard", "工程价值"],
+    "question": "Curry–Howard 对日常写代码有什么用（不是理论装饰）？",
+    "answer": "它把「写类型」变成「写规格」：类型表达得越精确，编译器检查的就越接近「证明你的实现符合规格」。实践含义：用类型排除非法状态（make illegal states unrepresentable），比写运行时校验更强。"
+  },
+  {
+    "id": "c-effects-models",
+    "node": "n-effects",
+    "tags": ["副作用", "效果系统"],
+    "question": "副作用/liveness 的三种建模方式？",
+    "answer": "① 单子：IO a 是一个「会产生 a 的动作」的值 ② 代数效应：effect handlers 可插拔，天然支持 mock ③ 线性/唯一性类型：把外部世界当作被消耗的参数（Clean 的 *World）。"
+  },
+  {
+    "id": "c-effects-as-value",
+    "node": "n-effects",
+    "tags": ["副作用", "可测试性"],
+    "question": "「效果是值」这个观念对测试有什么直接好处？",
+    "answer": "依赖注入不再需要打补丁或 mock 框架：把效果描述成数据结构，换一个解释器（handler）就完成替换。同一份业务代码可以跑在真实 IO、内存 mock、或录制回放上。"
+  },
+  {
+    "id": "c-monad-laws",
+    "node": "n-monad-laws",
+    "tags": ["单子", "重构"],
+    "question": "单子三定律是什么？为什么它们保证重构安全？",
+    "answer": "左单位 return a >>= f ≡ f a；右单位 m >>= return ≡ m；结合律 (m >>= f) >>= g ≡ m >>= (λx. f x >>= g)。它们都是**等式**，所以可以把代码块拆分/合并而不改变语义。"
+  },
+  {
+    "id": "c-orthogonality",
+    "node": "n-orthogonality",
+    "tags": ["正交性", "复杂度"],
+    "question": "正交性与普通「解耦」的差别？",
+    "answer": "解耦只说「互不依赖」；正交更强，要求「组合后的行为可以被分别预测再叠加」。n 个正交特性 → n 种效果；n 个互相影响的特性 → 2^n 种。这是配置项爆炸的量化解释。"
+  },
+  {
+    "id": "c-minimal-triangle",
+    "node": "n-adt",
+    "tags": ["最小元素", "综述"],
+    "question": "「代码的最小构成元素」这个问题，应该分几层回答？",
+    "answer": "四层：执行层=函数应用（β 归约）；语言核心层=构造+匹配+应用；语义骨架层=值+环境+效果；可读层=符号+括号+名字。问在哪一层决定答案，混着答会错。"
+  }
+]

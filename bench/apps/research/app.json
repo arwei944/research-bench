@@ -1,0 +1,15 @@
+{
+  "id": "research",
+  "name": "研究",
+  "icon": "research",
+  "tagline": "14 条外部通道：检索 → 核验 → 成稿。禁止模型编造引用。",
+  "color": "#5b93f8",
+  "order": 10,
+  "version": "1.0.0",
+  "entry": "index.html",
+  "layer": "app",
+  "requires": [
+    "mode",
+    "design-system"
+  ]
+}

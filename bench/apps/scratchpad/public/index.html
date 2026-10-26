@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>草稿台</title>
+<style>
+  :root { --bg:#0b0d12; --panel:#12151d; --elev:#181c26; --line:#232936;
+          --fg:#e8ecf4; --fg2:#a2adc0; --fg3:#697586; --ac:#5b93f8; }
+  [data-theme="light"] { --bg:#f6f7f9; --panel:#fff; --elev:#f0f2f5; --line:#e2e6ec;
+          --fg:#161b22; --fg2:#4c5866; --fg3:#7b8794; --ac:#2563eb; }
+  body { margin:0; padding:28px; font:14px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+         background:var(--bg); color:var(--fg); }
+  h1 { font-size:19px; margin:0 0 6px; }
+  .muted { color:var(--fg3); font-size:12.5px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:14px; }
+  input,button { font:inherit; }
+  input { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px 11px; color:var(--fg); width:min(320px,60%); }
+  button { background:var(--ac); color:#fff; border:none; border-radius:8px; padding:8px 16px; cursor:pointer; }
+  code { background:var(--elev); padding:1px 5px; border-radius:4px;
+         font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+  pre { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:11px; overflow:auto;
+        font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+</style></head>
+<body>
+  <h1>◇ 草稿台</h1>
+  <p class="muted">带 API 的示例应用。数据存在 <code>apps/scratchpad/data/</code>。</p>
+  <div class="card">
+    <input id="text" placeholder="输入点什么" />
+    <button id="add">追加</button>
+    <button id="list" style="background:var(--elev);color:var(--fg2)">刷新列表</button>
+    <pre id="out">（点按钮）</pre>
+  </div>
+  <script>
+    const out = document.getElementById("out");
+    const api = async (p, o) => (await fetch("/api/scratchpad" + p, { headers: {"Content-Type":"application/json"}, ...o })).json();
+    document.getElementById("add").onclick = async () => {
+      const v = document.getElementById("text").value.trim();
+      if (!v) return;
+      await api("/items", { method: "POST", body: JSON.stringify({ text: v }) });
+      document.getElementById("text").value = "";
+      list();
+    };
+    document.getElementById("list").onclick = list;
+    async function list() { out.textContent = JSON.stringify(await api("/items"), null, 2); }
+    list();
+  </script>
+<script src="/static/kit.js"></script>
+<script>
+// 设计/主题/模式同步 —— 统一交给 kit，不再各自实现
+// （原来每个应用都手写一遍 postMessage 监听，既重复又漏了设计感知）
+(function () {
+  function ready() {
+    if (!window.Bench || !window.Bench.kit) return;
+    Bench.kit.theme.sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+  else ready();
+})();
+</script>
+</body></html>

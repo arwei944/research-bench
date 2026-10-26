@@ -1,0 +1,15 @@
+{
+  "id": "labset",
+  "name": "实验器",
+  "icon": "labset",
+  "tagline": "测「实际产出 ÷ 名义能力」：任务 × 配置 × 客观判分。只收有可执行验证器的任务。",
+  "color": "#f472b6",
+  "order": 10,
+  "version": "0.1.0",
+  "layer": "app",
+  "requires": [
+    "shell",
+    "mode"
+  ],
+  "entry": "index.html"
+}

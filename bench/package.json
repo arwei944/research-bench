@@ -1,0 +1,12 @@
+{
+  "name": "bench",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "统一工作台平台 —— 一个服务，多应用，自动发现，一键增删",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

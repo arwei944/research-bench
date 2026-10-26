@@ -1,0 +1,336 @@
+{
+  "layer": "L2",
+  "terms": [
+    {
+      "id": "t-attention",
+      "cn": "自注意力",
+      "en": "self-attention",
+      "def": "序列中每个位置根据与其它位置的相关性，加权汇总其它位置的信息。",
+      "why": "它是 Transformer 的全部。所有「长上下文为什么贵」「为什么有 KV cache」都能从它的计算方式直接推出来。",
+      "depends": [],
+      "contrasts": [
+        "t-qkv",
+        "t-causal-mask"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果去掉自注意力，只保留前馈网络，模型还能处理「代词指代前文的谁」吗？",
+          "expect": "不能。FFN 是逐位置独立变换，没有跨位置信息流动；跨位置关联只能靠注意力（或卷积/循环结构）"
+        },
+        {
+          "kind": "application",
+          "q": "为什么序列长度翻倍，注意力的计算量约变成 4 倍？",
+          "expect": "注意力要算所有位置对的相关性，是 n×n 矩阵，复杂度 O(n²d)；n 翻倍则对数为 4 倍"
+        }
+      ]
+    },
+    {
+      "id": "t-qkv",
+      "cn": "查询/键/值",
+      "en": "Q / K / V",
+      "def": "每个位置投影出三个向量：Q 用来发问，K 用来被匹配，V 是被取走的内容。分数 = softmax(QKᵀ/√d)。",
+      "why": "它是理解注意力的唯一入口。Q 与 K 分离的设计，才让「一个位置按需从多处取信息」成为可能。",
+      "depends": [
+        "t-attention"
+      ],
+      "contrasts": [
+        "t-multihead",
+        "t-kv-cache"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "为什么 Q 和 K 要分开，不能直接用同一个向量做内积？",
+          "expect": "分开才能表达非对称关系（A 关注 B 不等于 B 关注 A）；同一向量内积是对称的，表达力受限"
+        },
+        {
+          "kind": "application",
+          "q": "KV cache 缓存的是 Q 还是 K/V？为什么？",
+          "expect": "只缓存 K 和 V。生成新 token 时只需算它自己的 Q，去和历史的 K 匹配；历史 K/V 可复用，历史 Q 不再需要"
+        }
+      ]
+    },
+    {
+      "id": "t-scaled-attention",
+      "cn": "缩放点积注意力",
+      "en": "scaled dot-product attention",
+      "def": "在 QKᵀ 之后除以 √d_k 再做 softmax。",
+      "why": "不除的话，维度越大点积方差越大，softmax 会饱和成 one-hot，梯度消失。这个细节是「训练能不能收敛」的关键。",
+      "depends": [
+        "t-qkv"
+      ],
+      "contrasts": [
+        "t-attention"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果不除以 √d，当 d=512 时会发生什么？",
+          "expect": "点积方差随 d 线性增长，数值变得很大，softmax 输出接近 one-hot，梯度几乎为 0，训练停滞"
+        }
+      ]
+    },
+    {
+      "id": "t-multihead",
+      "cn": "多头注意力",
+      "en": "multi-head attention",
+      "def": "把 d_model 拆成 h 组，各自独立做注意力，再拼接。",
+      "why": "单头只能学一种「相关性」。多头让模型同时学语法依赖、指代、位置等多种关系。",
+      "depends": [
+        "t-attention"
+      ],
+      "contrasts": [],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果把 32 头改成 1 头但保持总维度不变，参数量差不多，为什么效果会差？",
+          "expect": "参数量相近但表达被压到单一注意力模式；多头提供多个独立的「看问题的角度」，是表达力而非参数量的差异"
+        }
+      ]
+    },
+    {
+      "id": "t-ffn",
+      "cn": "前馈网络",
+      "en": "FFN / MLP",
+      "def": "注意力之后对每个位置独立做两层线性变换加非线性。通常中间维度是 d_model 的 4 倍左右。",
+      "why": "**参数量的绝大部分在这里**（约 2/3）。所以 MoE 也是把 FFN 拆成多个专家来省算力。",
+      "depends": [
+        "t-attention"
+      ],
+      "contrasts": [],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么 MoE 通常是「替换 FFN」而不是「替换注意力」？",
+          "expect": "因为 FFN 占了绝大部分参数，把它拆成多专家才能显著降低单次激活参数量；注意力参数占比小，拆它收益低"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "如果 FFN 里去掉非线性激活，整个 Transformer 会变成什么？",
+          "expect": "会退化成纯线性模型（注意力里的 softmax 除外），多层堆叠等价于单层线性变换，表达能力大幅塌陷"
+        }
+      ]
+    },
+    {
+      "id": "t-residual",
+      "cn": "残差连接",
+      "en": "residual connection",
+      "def": "把子层输入直接加到输出上：x + f(x)。",
+      "why": "没有它，几十层的网络根本训不动（梯度消失）。它是「深度」这件事成立的前提。",
+      "depends": [
+        "t-transformer-layer"
+      ],
+      "contrasts": [
+        "t-layernorm"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果去掉残差连接，一个 80 层的 Transformer 会怎样？",
+          "expect": "梯度在反向传播中指数衰减，前几层几乎收不到有效梯度，深层网络退化为难以训练；残差提供了恒等捷径"
+        }
+      ]
+    },
+    {
+      "id": "t-layernorm",
+      "cn": "层归一化",
+      "en": "LayerNorm",
+      "def": "对每个 token 的隐藏向量做标准化（减均值、除标准差），再学一组缩放/平移。",
+      "why": "它稳定了激活值尺度，让深层训练可行。同时它决定了「数值精度」在推理中的敏感性。",
+      "depends": [
+        "t-transformer-layer"
+      ],
+      "contrasts": [
+        "t-pre-ln",
+        "t-rmsnorm"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "LayerNorm 和 BatchNorm 的关键区别是什么？为什么 NLP 用前者？",
+          "expect": "LayerNorm 在单个样本的特征维上归一化，与批大小无关；BatchNorm 跨样本统计，序列长度可变时不稳定且推理依赖批统计"
+        }
+      ]
+    },
+    {
+      "id": "t-pre-ln",
+      "cn": "预归一化",
+      "en": "Pre-LN",
+      "def": "先做归一化再进子层：x + f(Norm(x))。相对的是 Post-LN（先子层再归一化）。",
+      "why": "现代模型几乎都用 Pre-LN，因为它不需要 warmup 也能稳定训练，深层不炸。这个选择直接决定了「能不能堆很深」。",
+      "depends": [
+        "t-layernorm"
+      ],
+      "contrasts": [
+        "t-residual"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "为什么 Post-LN 在深层网络里需要 learning rate warmup？",
+          "expect": "Post-LN 的残差主干没有归一化，深层输出尺度和梯度容易爆炸；warmup 是为了避免早期大步长把训练带崩。Pre-LN 把归一化放在子层前，主干保持恒等路径，梯度更稳"
+        }
+      ]
+    },
+    {
+      "id": "t-rmsnorm",
+      "cn": "RMSNorm",
+      "en": "RMSNorm",
+      "def": "只按均方根缩放，不减均值。比 LayerNorm 少一次归约，更快。LLaMA 系采用。",
+      "why": "它是「省一点算力」的典型工程优化，且实测不掉点。理解它说明你区分得开「数学必要性」与「工程选择」。",
+      "depends": [
+        "t-layernorm"
+      ],
+      "contrasts": [
+        "t-pre-ln"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "RMSNorm 少了什么操作？为什么少了它还能工作？",
+          "expect": "少了减均值（中心化）。因为后续有偏置项和残差，均值偏移可被吸收；只保留尺度归一化已足够稳定训练"
+        }
+      ]
+    },
+    {
+      "id": "t-transformer-layer",
+      "cn": "Transformer 层",
+      "en": "layer / block",
+      "def": "一个注意力子层加一个 FFN 子层，各自带残差与归一化，构成一个 block，堆 N 层。",
+      "why": "「N 层」是模型深度的定义。层数直接决定串行步数，从而决定推理延迟下限。",
+      "depends": [
+        "t-attention",
+        "t-ffn"
+      ],
+      "contrasts": [
+        "t-param-count"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么层数越多，推理越慢，即使参数量一样？",
+          "expect": "层是串行依赖的：第 2 层要等第 1 层算完。参数量影响单层计算量（可并行），层数影响串行步数（不可并行）"
+        }
+      ]
+    },
+    {
+      "id": "t-decoder-only",
+      "cn": "解码器-only",
+      "en": "decoder-only",
+      "def": "只保留带因果掩码的解码器结构，没有独立编码器。GPT / LLaMA / Qwen / DeepSeek 全是这种。",
+      "why": "它是当前所有主流 LLM 的架构。理解「为什么编码器-解码器被淘汰」能让你看清架构演进的方向。",
+      "depends": [
+        "t-transformer-layer",
+        "t-causal-mask"
+      ],
+      "contrasts": [
+        "t-autoregressive"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "编码器-解码器（如 T5）在什么任务上理论上更有优势？为什么还是被 decoder-only 取代了？",
+          "expect": "理论上在输入输出强分离的任务（翻译）有优势，双向编码更充分。被取代是因为 decoder-only 可统一所有任务为「续写」、训练目标简单、scaling 表现好、工程实现单一"
+        }
+      ]
+    },
+    {
+      "id": "t-causal-mask",
+      "cn": "因果掩码",
+      "en": "causal mask",
+      "def": "注意力矩阵的上三角被置为 -∞，使每个位置只能看到自己和左边。",
+      "why": "它保证训练时的「预测下一个」不会偷看答案。没有它，训练损失会好看但推理时完全失效。",
+      "depends": [
+        "t-attention"
+      ],
+      "contrasts": [
+        "t-autoregressive"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果训练时忘记加因果掩码，训练损失会怎样？部署后会发生什么？",
+          "expect": "训练损失会异常低（因为每个位置都能看到答案）；部署时无法获得未来 token，性能崩塌——这是典型的训练/推理不一致"
+        }
+      ]
+    },
+    {
+      "id": "t-autoregressive",
+      "cn": "自回归",
+      "en": "autoregressive",
+      "def": "一次预测下一个 token，把预测结果追加到输入，再预测下一个，循环直到结束。",
+      "why": "它是「生成」这件事的全部机制。也是「为什么流式输出是逐字吐」和「为什么有 TTFT」的原因。",
+      "depends": [
+        "t-decoder-only"
+      ],
+      "contrasts": [
+        "t-decoding",
+        "t-prefill-decode"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么自回归生成不能一次性并行输出整段回答？",
+          "expect": "第 n 个 token 的输入依赖第 n-1 个输出，是严格串行依赖；并行只在「预填充阶段处理已有输入」时成立"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "如果一个模型生成 1000 token 的回答，前向传播要做多少次？",
+          "expect": "1000 次（每次一个 token）。这正是投机解码、批处理等优化存在的原因"
+        }
+      ]
+    },
+    {
+      "id": "t-context-window",
+      "cn": "上下文窗口",
+      "en": "context window",
+      "def": "一次前向能处理的 token 总数上限，包括输入和已生成的输出。",
+      "why": "它是「模型能记住多少」的硬边界。但注意：**能放进去 ≠ 能用好**（见 lost in the middle）。",
+      "depends": [
+        "t-autoregressive"
+      ],
+      "contrasts": [
+        "t-rope"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "把上下文从 8k 扩到 1M，是否意味着模型能同等有效地利用这 1M？",
+          "expect": "不是。有效利用受注意力衰减、训练分布、lost-in-the-middle 影响；标称窗口是容量上限，不是有效容量"
+        },
+        {
+          "kind": "application",
+          "q": "为什么长上下文推理的成本增长快于线性？",
+          "expect": "预填充阶段注意力是 O(n²)；KV cache 显存随 n 线性增长，到一定程度会限制批大小，进一步恶化吞吐"
+        }
+      ]
+    },
+    {
+      "id": "t-param-count",
+      "cn": "参数量",
+      "en": "parameter count",
+      "def": "模型所有权重元素的总数，如 7B / 70B。MoE 需区分总参数与激活参数。",
+      "why": "它是最常被误用的数字。**参数量不等于能力**，MoE 里「600B 总参 / 37B 激活」的成本要按激活算。",
+      "depends": [
+        "t-transformer-layer",
+        "t-ffn"
+      ],
+      "contrasts": [
+        "t-scaling-law"
+      ],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "「总参 600B、激活 37B」的模型，推理成本应该按哪个估算？显存该按哪个估？",
+          "expect": "推理算力按激活参数（37B）估；显存必须按总参数（600B）估，因为所有权重都要载入显存"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "两个模型都是 70B，能力一定接近吗？",
+          "expect": "不一定。训练数据量、数据质量、后训练、架构细节（GQA/MoE）、上下文长度都会造成显著差异；参数量只是容量上界"
+        }
+      ]
+    }
+  ]
+}

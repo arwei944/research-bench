@@ -1,0 +1,34 @@
+{
+  "_说明": "Pi 自定义模型配置参考模板(零成本本地路线)。用法:将本文件内容按需调整后,保存为 ~/.pi/models.json(全局)或工作区 /models.json。",
+  "_声明": "⚠️ 字段结构以官方文档为准: https://pi.dev/docs/latest/models (Custom models / Custom providers)。首次配置建议在 pi 交互内运行 /login 与 /model 逐步引导,或对照官方 models.md 校准后再落盘。",
+  "_零成本路线": "优先本地模型(Ollama / llama.cpp),质量不足时用免费额度云端(Google Gemini / Groq / Hugging Face / Cloudflare Workers AI)。",
+
+  "models": [
+    {
+      "id": "local-ollama",
+      "name": "Ollama 本地模型",
+      "provider": "openai-compatible",
+      "baseUrl": "http://localhost:11434/v1",
+      "apiKey": "ollama",
+      "headers": {},
+      "models": ["qwen2.5:14b-instruct", "llama3.1:8b-instruct"],
+      "_提示": "Ollama 默认 OpenAI 兼容端点即 http://localhost:11434/v1;apiKey 任意非空值即可。模型需先在本机 ollama pull。"
+    },
+    {
+      "id": "local-llamacpp",
+      "name": "llama.cpp 本地路由",
+      "provider": "openai-compatible",
+      "baseUrl": "http://localhost:8080/v1",
+      "apiKey": "llamacpp",
+      "models": ["qwen2.5-14b-instruct"],
+      "_提示": "llama.cpp 服务端默认端口 8080,加载的 GGUF 模型即 /v1/chat/completions 的可用模型。也可用 pi 内置 /login llama.cpp + /llama 管理。"
+    }
+  ],
+  "_免费云端": {
+    "Google Gemini": "GEMINI_API_KEY(免费层)",
+    "Groq": "GROQ_API_KEY(免费层,速度极快)",
+    "Hugging Face": "HF_TOKEN(免费额度)",
+    "Cloudflare Workers AI": "CLOUDFLARE_API_KEY(免费额度)",
+    "配置方式": "用 /login 选择对应 provider,或在 ~/.pi/agent/auth.json 写入 { \"gemini\": {\"type\":\"api_key\",\"key\":\"$GEMINI_API_KEY\"} }"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "nb-day2",
+  "title": "第 2 天 · 递归与停机的代价",
+  "note": "目标：理解为什么「递归不是语法糖」以及为什么求值顺序是语义而非优化。",
+  "cells": [
+    {
+      "lang": "lambda",
+      "title": "① 最简单的死循环",
+      "code": "OMEGA",
+      "comment": "一步之后还是自己。这就是停机问题的具体化身。"
+    },
+    {
+      "lang": "lambda",
+      "title": "② 求值顺序决定了能不能算出来",
+      "code": "(\\x.y) OMEGA",
+      "comment": "正规序（本解释器的策略）：直接扔掉 OMEGA，得 y。如果用应用序 call-by-value，会先去算 OMEGA，永远算不出。同一个表达式，两种语义，两种结果。"
+    },
+    {
+      "lang": "lambda",
+      "title": "③ 用 Y 写递归",
+      "code": "Y (\\f.\\n.ISZERO n 0 (PLUS n (f (PRED n)))) 3",
+      "comment": "没有名字，怎么「自己调用自己」？Y 把 f 作用在自己的不动点上。递归 = 不动点。"
+    },
+    {
+      "lang": "lambda",
+      "title": "④ 减法为什么这么复杂",
+      "code": "PRED 3",
+      "comment": "加法一行就够，减法要用 PRED 且需要 PAIR。想想：Church 数只能「正向重复」，要「反向」就得绕着走。这就是为什么 PRED 的小定义看起来像黑魔法。"
+    },
+    {
+      "lang": "js",
+      "title": "⑤ JS 里同样的停机问题",
+      "code": "// 应用序的 Y 会爆栈\nconst Y_cbv = f => (x => f(v => x(x)(v)))(x => f(v => x(x)(v)));\n// 上面加了 λv 延迟求值（η 展开），才能在 call-by-value 里用\nconst fact = Y_cbv(f => n => n <= 1 ? 1 : n * f(n - 1));\nfact(5)",
+      "comment": "对比不加 v => 的版本，会 RangeError: Maximum call stack size exceeded。这就是「求值策略」在真实语言里的体现。"
+    }
+  ]
+}

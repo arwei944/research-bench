@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>外壳</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#12151d;--elev:#181c26;--line:#232936;--line2:#333c4d;
+        --fg:#e8ecf4;--fg2:#a2adc0;--fg3:#697586;--ac:#5b93f8;--ok:#3ddc97;--warn:#fbbf24;--err:#fb7185}
+  [data-theme="light"]{--bg:#f6f7f9;--panel:#fff;--elev:#f0f2f5;--line:#e2e6ec;--line2:#c8cfda;
+        --fg:#161b22;--fg2:#4c5866;--fg3:#7b8794;--ac:#2563eb;--ok:#059669;--warn:#b45309;--err:#dc2626}
+  body{margin:0;padding:26px;font:14px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--fg)}
+  h1{font-size:18px;margin:0 0 6px}
+  .muted{color:var(--fg3);font-size:12.5px;line-height:1.7}
+  .flow{display:flex;flex-direction:column;gap:0;margin:18px 0}
+  .step{display:flex;gap:12px;align-items:flex-start;position:relative;padding-bottom:18px}
+  .step:not(:last-child)::before{content:"";position:absolute;left:11px;top:24px;bottom:0;
+    width:1px;background:var(--line2)}
+  .num{width:23px;height:23px;border-radius:50%;background:var(--elev);border:1px solid var(--line2);
+    display:grid;place-items:center;font-size:10.5px;font-weight:700;color:var(--fg2);flex:none;z-index:1}
+  .step .c{flex:1}
+  .step .t{font-size:13px;font-weight:600;margin-bottom:2px}
+  .step .d{font-size:11.5px;color:var(--fg3);line-height:1.65}
+  code{background:var(--elev);padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
+  pre{background:var(--elev);border:1px solid var(--line);border-radius:8px;padding:11px;
+      overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.65}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px;margin-top:10px}
+  .kv .k{color:var(--fg3);font-family:ui-monospace,Consolas,monospace;font-size:11px}
+  .kv .v{color:var(--fg2)}
+</style></head>
+<body>
+  <h1>◈ 外壳</h1>
+  <p class="muted">
+    平台层。负责路由分发、应用注册表、主题与模式注入。<b>它坏了，所有应用都打不开。</b>
+    这一层刻意保持极薄——只有 3 个文件，逻辑不超过 400 行。
+  </p>
+
+  <div class="flow">
+    <div class="step"><div class="num">1</div><div class="c">
+      <div class="t">请求进来</div>
+      <div class="d"><code>server.mjs</code> 按路径前缀分发：<code>/</code> 外壳、<code>/app/&lt;id&gt;/</code> 应用前端、<code>/api/&lt;id&gt;/</code> 应用后端、<code>/api/_platform/*</code> 平台 API。</div>
+    </div></div>
+    <div class="step"><div class="num">2</div><div class="c">
+      <div class="t">扫描应用</div>
+      <div class="d"><code>lib/registry.mjs</code> 每次请求都重新读 <code>apps/</code> 目录，所以新增/删除目录即刻生效。同时解析 <code>app.json</code> 的 <code>layer</code> 字段并检查依赖合法性。</div>
+    </div></div>
+    <div class="step"><div class="num">3</div><div class="c">
+      <div class="t">加载应用后端</div>
+      <div class="d"><code>server.mjs</code> 按 <b>mtime 缓存</b>动态 import 应用的 <code>server.mjs</code>，改了代码下次请求自动重载。<code>routes</code> 做精确匹配，<code>dynamicRoutes</code> 做正则匹配。</div>
+    </div></div>
+    <div class="step"><div class="num">4</div><div class="c">
+      <div class="t">注入主题与模式</div>
+      <div class="d">把 <code>data-theme</code> / <code>data-mode</code> 写进 iframe 的 <code>&lt;html&gt;</code>，并通过 <code>postMessage</code> 下发 CSS 变量与 <code>appMode</code>。</div>
+    </div></div>
+  </div>
+
+  <h2 style="font-size:13px;margin:22px 0 8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em">当前状态</h2>
+  <div class="kv" id="kv"></div>
+
+  <h2 style="font-size:13px;margin:22px 0 8px;color:var(--fg3);text-transform:uppercase;letter-spacing:.07em">分层规则</h2>
+  <p class="muted">见 <code>bench/lib/layers.mjs</code>。核心规则：</p>
+  <pre>L0 platform  不依赖任何层
+L1 core      只能依赖 L0
+L2 app       只能依赖 L0 / L1
+L3 lab       可以依赖任何层（实验品允许乱来）
+
+反向影响：下层坏了 → 依赖它的上层全废
+         上层坏了 → 下层不受影响</pre>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+(async () => {
+  const h = await fetch("/api/_platform/health").then(r => r.json());
+  const d = await fetch("/api/_platform/designs").then(r => r.json());
+  const m = await fetch("/api/_platform/mode").then(r => r.json());
+  $("kv").innerHTML = [
+    ["运行时长", h.uptime + " 秒"],
+    ["应用数", h.apps.length + " 个"],
+    ["当前设计", d.current],
+    ["可选设计", d.designs.length + " 款"],
+    ["当前模式", m.mode === "expert" ? "专家" : "小白"],
+    ["Node", navigator.userAgent.match(/Chrome\/[\d.]+/)?.[0] ?? "—"],
+  ].map(([k,v]) => `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join("");
+})();
+
+window.addEventListener("message", (e) => {
+  if (e.data?.type === "bench:theme" && e.data.mode) document.documentElement.dataset.theme = e.data.mode;
+  if (e.data?.type === "bench:theme" && e.data.vars) {
+    const r = document.documentElement.style;
+    for (const [k, v] of Object.entries(e.data.vars)) r.setProperty(k, v);
+  }
+});
+try { window.parent?.postMessage({ type: "bench:ready" }, "*"); } catch {}
+</script>
+<script src="/static/kit.js"></script>
+<script>
+// 设计/主题/模式同步 —— 统一交给 kit，不再各自实现
+// （原来每个应用都手写一遍 postMessage 监听，既重复又漏了设计感知）
+(function () {
+  function ready() {
+    if (!window.Bench || !window.Bench.kit) return;
+    Bench.kit.theme.sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+  else ready();
+})();
+</script>
+</body></html>

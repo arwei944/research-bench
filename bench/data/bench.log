@@ -1,0 +1,627 @@
+bench 已启动  http://127.0.0.1:7802
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7801
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7801
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+[bench] POST /api/_platform/apps → invalid JSON
+[bench] uncaughtException 2026-10-26T12:27:31.729Z: ReferenceError: layers is not defined
+    at Module.discover (file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/lib/registry.mjs:67:21)
+    at Server.<anonymous> (file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/server.mjs:357:25)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:521:24)
+    at emitListeningNT (node:net:2052:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+[bench] GET /api/_platform/apps → layers is not defined
+[bench] GET /api/_platform/apps → layers is not defined
+[bench] GET /api/_platform/apps → layers is not defined
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 2 个应用：🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 5 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+[app:broken] 加载 server.mjs 失败: 我在加载时就崩了
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  💥坏掉的应用  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  💥坏掉的应用  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  💥坏掉的应用  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+[app:broken] 加载 server.mjs 失败: 我在加载时就崩了
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  💥坏掉的应用  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+[app:broken] 加载 server.mjs 失败: 我在加载时就崩了
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 6 个应用：◈外壳  ◉模式  ◉设计系统  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+[bench] GET /api/labset/runs → require is not defined
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：unavailable（llm=unavailable, search=degraded, evaluator=unavailable）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：unavailable（llm=ok, search=unavailable）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：degraded（llm=degraded, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 8 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  🧠大模型  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 8 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  🧠大模型  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 8 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  🧠大模型  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：degraded（llm=degraded, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 8 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  🧠大模型  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 8 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  🧠大模型  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 8 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  🧠大模型  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+[bench] POST /api/research/verify → 缺少 target 或 items
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/server.mjs:64
+    const fm = txt.match(/^---
+                         ^
+
+SyntaxError: Invalid regular expression: missing /
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+    at #translate (node:internal/modules/esm/loader:434:20)
+    at afterLoad (node:internal/modules/esm/loader:502:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:507:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:560:36)
+    at afterResolve (node:internal/modules/esm/loader:607:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:613:12)
+    at node:internal/modules/esm/loader:632:32
+    at TracingChannel.tracePromise (node:diagnostics_channel:362:14)
+
+Node.js v24.18.0
+file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/server.mjs:46
+const SKILLS_ROOT = path.resolve(HERE, "..", ".pi", "skills");
+                                 ^
+
+ReferenceError: Cannot access 'HERE' before initialization
+    at file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/server.mjs:46:34
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/lib/icons.mjs:100
+  home: `
+  ^^^^
+
+SyntaxError: Unexpected identifier 'home'
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+    at #translate (node:internal/modules/esm/loader:434:20)
+    at afterLoad (node:internal/modules/esm/loader:502:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:507:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:560:36)
+    at afterResolve (node:internal/modules/esm/loader:607:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:613:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:253:17)
+
+Node.js v24.18.0
+file:///C:/work/newmax/%E7%A0%94%E7%A9%B6%E6%99%BA%E8%83%BD%E4%BD%93/bench/lib/icons.mjs:100
+  home: `
+  ^^^^
+
+SyntaxError: Unexpected identifier 'home'
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+    at #translate (node:internal/modules/esm/loader:434:20)
+    at afterLoad (node:internal/modules/esm/loader:502:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:507:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:560:36)
+    at afterResolve (node:internal/modules/esm/loader:607:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:613:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:253:17)
+
+Node.js v24.18.0
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：◈外壳  ◉模式  ◉设计系统  ⚗实验器  🔬研究  🎓学习  ◇草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：ok（llm=ok, search=ok）
+bench 已启动  http://127.0.0.1:7800
+应用目录 C:\work\newmax\研究智能体\bench\apps
+已发现 7 个应用：shell外壳  mode模式  design-system设计系统  labset实验器  research研究  learn学习  scratchpad草稿台
+新增应用：node bench/bench.mjs new <id>   或从 Web UI 的「应用管理」
+能力层探测完成：degraded（llm=ok, search=degraded）

@@ -1,0 +1,167 @@
+{
+  "layer": "L1",
+  "terms": [
+    {
+      "id": "t-tokenization",
+      "cn": "分词",
+      "en": "tokenization",
+      "def": "把原始文本切成模型认识的片段序列的过程。",
+      "why": "它是模型与文本之间唯一的接口。切法一旦定下，模型就永远看不到「字」，只看到切出来的片段。",
+      "depends": [],
+      "contrasts": [
+        "t-token",
+        "t-vocab"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么同一个中文句子，用不同模型算出来的 token 数可能差一倍？",
+          "expect": "因为不同模型用不同词表训练，切分粒度不同；中文在多数英文为主的词表里被切成更碎的字节或子词"
+        },
+        {
+          "kind": "contrast",
+          "q": "分词和「把句子按空格拆成单词」有什么本质区别？",
+          "expect": "空格拆分是规则，分词是从数据里学出来的统计切分；且分词单位不是词，是子词/字节"
+        }
+      ]
+    },
+    {
+      "id": "t-token",
+      "cn": "词元",
+      "en": "token",
+      "def": "模型的最小输入输出单位。它不等于字，也不等于词，是词表里的一项。",
+      "why": "模型的一切计量都以 token 为单位：上下文长度、价格、速度。不理解它，你会误判成本与容量。",
+      "depends": [
+        "t-tokenization"
+      ],
+      "contrasts": [],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果模型按「字」而不是按 token 计数，那么「strawberry 里有几个 r」这类问题会变简单吗？",
+          "expect": "会。按字符切分时每个字母是独立单位，数数变成直接可读；按 token 切时整个词可能是一个 token，模型看不到内部字母"
+        },
+        {
+          "kind": "application",
+          "q": "一个模型标称 128k 上下文，你如何估算它能放多少中文？",
+          "expect": "不能直接用 128k 字；要看该模型对中文的 token 效率，通常 1 个汉字约 0.6~2 个 token，需实测"
+        }
+      ]
+    },
+    {
+      "id": "t-vocab",
+      "cn": "词表",
+      "en": "vocabulary",
+      "def": "所有可用 token 的集合，常见规模 3 万到 25 万。",
+      "why": "词表大小决定了「切得多碎」与「输出层多大」的权衡：词表越大，单 token 承载越多，但输出层参数与 softmax 成本越高。",
+      "depends": [
+        "t-tokenization"
+      ],
+      "contrasts": [
+        "t-oov",
+        "t-bpe"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果把词表从 5 万扩到 100 万，会有什么代价？",
+          "expect": "输出层与嵌入矩阵参数暴增；softmax 变慢；每个 token 的训练样本变稀疏，低频 token 学不好"
+        }
+      ]
+    },
+    {
+      "id": "t-oov",
+      "cn": "词表外",
+      "en": "OOV / unknown",
+      "def": "词表里没有的字符串。传统方案会映射成一个 <unk>，信息直接丢失。",
+      "why": "它是「为什么早期模型遇到生僻字就崩」的原因，也是字节级 BPE 存在的理由。",
+      "depends": [
+        "t-vocab"
+      ],
+      "contrasts": [
+        "t-bpe-byte"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果词表里没有「龘」这个字，模型还能表示它吗？取决于什么设计？",
+          "expect": "取决于是否字节级：字符级/词级方案会 OOV 丢失；字节级 BPE 会把它拆成 UTF-8 字节序列，永不丢失"
+        }
+      ]
+    },
+    {
+      "id": "t-bpe",
+      "cn": "字节对编码",
+      "en": "BPE",
+      "def": "从字符开始，反复把最高频的相邻符号对合并成新符号，直到达到目标词表大小。",
+      "why": "它是现代分词的事实标准。理解合并过程，你就理解了「为什么常见词是 1 个 token，罕见词被切碎」。",
+      "depends": [
+        "t-vocab"
+      ],
+      "contrasts": [
+        "t-bpe-byte"
+      ],
+      "probes": [
+        {
+          "kind": "application",
+          "q": "为什么在 BPE 词表里，「 the」常常是单独一个 token，而「zqx」会被拆成好几个？",
+          "expect": "合并按频次进行；高频子串被合并成独立 token，罕见串没有机会被合并，只能停在字符或字节级别"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "如果训练语料全是英文，用这个 BPE 处理中文会发生什么？",
+          "expect": "中文几乎没有高频子串被合并，会被切到字节级，token 数暴增，成本与有效上下文都变差"
+        }
+      ]
+    },
+    {
+      "id": "t-bpe-byte",
+      "cn": "字节级 BPE",
+      "en": "byte-level BPE",
+      "def": "先把文本转成 UTF-8 字节序列，再在字节上做 BPE。GPT 系列采用此方案。",
+      "why": "它保证**永不 OOV**：任何字符都是字节组合，一定有表示。代价是罕见字符占多个 token。",
+      "depends": [
+        "t-bpe",
+        "t-oov"
+      ],
+      "contrasts": [],
+      "probes": [
+        {
+          "kind": "contrast",
+          "q": "字节级 BPE 和普通 BPE 的关键差别是什么？为什么这个差别重要？",
+          "expect": "操作对象从「字符」变成「UTF-8 字节」，因此词表只需覆盖 256 个字节即可表示任意 Unicode，永不 OOV"
+        },
+        {
+          "kind": "counterfactual",
+          "q": "既然字节级永不 OOV，为什么还要把词表做到 10 万以上？",
+          "expect": "为了效率：不合并的话每个字符要 3 个字节 token，序列变长 3 倍；大词表让常见片段压成 1 个 token，省算力也扩有效上下文"
+        }
+      ]
+    },
+    {
+      "id": "t-rope",
+      "cn": "旋转位置编码",
+      "en": "RoPE",
+      "def": "把位置信息编码成对 Q/K 向量的旋转角度，使注意力分数天然依赖相对距离。",
+      "why": "它是当前几乎所有主流模型的标配（LLaMA/Qwen/DeepSeek）。理解它才能理解「上下文扩展」是怎么做的。",
+      "depends": [
+        "t-attention"
+      ],
+      "contrasts": [
+        "t-context-window"
+      ],
+      "probes": [
+        {
+          "kind": "counterfactual",
+          "q": "如果完全不用位置编码，模型能区分「狗咬人」和「人咬狗」吗？",
+          "expect": "不能。注意力本身是置换不变的，没有位置信息时打乱词序不改变输出；位置编码是区分顺序的唯一来源"
+        },
+        {
+          "kind": "application",
+          "q": "为什么把上下文从 8k 扩到 128k 不是「改个数字」那么简单？",
+          "expect": "RoPE 的频率设计决定了训练时未见过的位置会外推失真；需要位置插值/频率调整并补训练，否则长位置表现崩塌"
+        }
+      ]
+    }
+  ]
+}
